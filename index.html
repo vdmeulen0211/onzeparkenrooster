@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport"
-content="width=device-width, initial-scale=1">
+ content="width=device-width, initial-scale=1">
 <title>OnzeParkenRooster</title>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   font-family: Arial, sans-serif;
@@ -25,10 +23,7 @@ h1 {
   font-size: 30px;
 }
 
-.subtitle {
-  text-align: center;
-  margin-bottom: 30px;
-}
+.subtitle { text-align: center; }
 
 .kaart {
   background: white;
@@ -60,8 +55,15 @@ button {
   cursor: pointer;
 }
 
-button:disabled {
-  opacity: 0.5;
+button:disabled { opacity: 0.5; }
+
+button.secundair {
+  background: #e8edf0;
+  color: #253238;
+}
+
+button.verwijderen {
+  background: #b73535;
 }
 
 label {
@@ -71,9 +73,21 @@ label {
 }
 
 .dienst {
-  padding: 14px;
+  padding: 14px 0;
   border-bottom: 1px solid #ddd;
   line-height: 1.6;
+}
+
+.dienstknoppen {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dienstknoppen button {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
 }
 
 .status {
@@ -83,7 +97,7 @@ label {
   margin: 15px 0;
 }
 
-#melding {
+#melding, #loginMelding {
   color: #a33524;
   overflow-wrap: anywhere;
 }
@@ -95,9 +109,7 @@ footer {
   font-size: 13px;
 }
 
-[hidden] {
-  display: none !important;
-}
+[hidden] { display: none !important; }
 </style>
 </head>
 
@@ -108,25 +120,14 @@ footer {
 
 <section class="kaart" id="login">
   <h2>Inloggen</h2>
-
   <form id="loginForm">
-    <input
-      id="email"
-      type="email"
+    <input id="email" type="email"
       placeholder="E-mailadres"
-      autocomplete="username"
-      required>
-
-    <input
-      id="password"
-      type="password"
+      autocomplete="username" required>
+    <input id="password" type="password"
       placeholder="Wachtwoord"
-      autocomplete="current-password"
-      required>
-
-    <button type="submit">
-      Inloggen
-    </button>
+      autocomplete="current-password" required>
+    <button type="submit">Inloggen</button>
   </form>
   <p id="loginMelding" role="status"></p>
 </section>
@@ -134,21 +135,16 @@ footer {
 <section class="kaart" id="dashboard" hidden>
   <h2 id="welkom">Welkom</h2>
   <p id="rol"></p>
-
-  <button id="logout">
-    Uitloggen
-  </button>
+  <button id="logout">Uitloggen</button>
 </section>
 
 <section class="kaart" id="planner" hidden>
-
   <h2>📅 Weekrooster</h2>
 
   <label>Kies een week</label>
   <input type="date" id="datum">
 
   <h3 id="weekTitel"></h3>
-
   <p class="status" id="status"></p>
 
   <button id="maakWeek" hidden>
@@ -156,11 +152,11 @@ footer {
   </button>
 
   <div id="formulier" hidden>
-
-    <h3>Nieuwe dienst toevoegen</h3>
+    <h3 id="formulierTitel">
+      Nieuwe dienst toevoegen
+    </h3>
 
     <form id="dienstForm">
-
       <label>Medewerker</label>
       <select id="medewerker" required></select>
 
@@ -168,45 +164,30 @@ footer {
       <input type="date" id="werkdag" required>
 
       <label>Begintijd</label>
-      <input
-        type="time"
-        id="begin"
-        value="09:00"
-        required>
+      <input type="time" id="begin"
+        value="09:00" required>
 
       <label>Eindtijd</label>
-      <input
-        type="time"
-        id="eind"
-        value="17:00"
-        required>
+      <input type="time" id="eind"
+        value="17:00" required>
 
       <label>Pauze (minuten)</label>
-      <input
-        type="number"
-        id="pauze"
-        value="30"
-        min="0"
-        required>
+      <input type="number" id="pauze"
+        value="30" min="0" required>
 
-      <button type="submit">
-        Dienst opslaan
+      <button type="submit" id="opslaan">
+        Dienst toevoegen
       </button>
-
+      <button type="button" id="annuleren"
+        class="secundair" hidden>
+        Wijziging annuleren
+      </button>
     </form>
   </div>
 
   <h3>Ingeplande diensten</h3>
-
   <div id="diensten"></div>
-
   <p id="melding" role="status"></p>
-
-  <p>
-    Weekroosters publiceren en e-mailmeldingen
-    worden in de volgende versie toegevoegd.
-  </p>
-
 </section>
 
 <section class="kaart" id="werknemer" hidden>
@@ -217,7 +198,7 @@ footer {
   </p>
 </section>
 
-<footer>Versie 1.2.0</footer>
+<footer>Versie 1.2.1</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
@@ -236,15 +217,15 @@ const db = window.supabase.createClient(
 const el = id => document.getElementById(id);
 
 let weekId = null;
+let weekStatus = null;
+let bewerkId = null;
 let namen = {};
+let huidigeDiensten = [];
 
 function datumTekst(d) {
-  return (
-    d.getFullYear() + "-" +
-    String(d.getMonth() + 1).padStart(2, "0") +
-    "-" +
-    String(d.getDate()).padStart(2, "0")
-  );
+  return d.getFullYear() + "-" +
+    String(d.getMonth() + 1).padStart(2,"0") +
+    "-" + String(d.getDate()).padStart(2,"0");
 }
 
 function verschuif(datum, dagen) {
@@ -255,18 +236,76 @@ function verschuif(datum, dagen) {
 
 function maandag(datum) {
   const d = new Date(datum + "T12:00:00");
-  d.setDate(
-    d.getDate() - ((d.getDay() + 6) % 7)
-  );
+  d.setDate(d.getDate() -
+    ((d.getDay() + 6) % 7));
   return datumTekst(d);
+}
+
+function lokaleDatum(d) {
+  return datumTekst(new Date(d));
+}
+
+function lokaleTijd(d) {
+  return new Date(d).toLocaleTimeString(
+    "nl-NL", {
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  );
 }
 
 function bericht(tekst) {
   el("melding").textContent = tekst;
 }
 
+function resetFormulier() {
+  bewerkId = null;
+  el("dienstForm").reset();
+  el("begin").value = "09:00";
+  el("eind").value = "17:00";
+  el("pauze").value = "30";
+
+  if (el("datum").value) {
+    el("werkdag").value =
+      maandag(el("datum").value);
+  }
+
+  el("formulierTitel").textContent =
+    "Nieuwe dienst toevoegen";
+
+  el("opslaan").textContent =
+    "Dienst toevoegen";
+
+  el("annuleren").hidden = true;
+}
+
+async function controleerConcept() {
+  if (!weekId) {
+    throw new Error("Geen roosterweek geselecteerd.");
+  }
+
+  const {data, error} = await db
+    .from("roosterweken")
+    .select("status")
+    .eq("id", weekId)
+    .single();
+
+  if (error) throw error;
+
+  if (data.status !== "concept") {
+    await laadWeek();
+    throw new Error(
+      "Deze week is niet meer in concept."
+    );
+  }
+}
+
 async function laadWeek() {
   weekId = null;
+  weekStatus = null;
+  huidigeDiensten = [];
+
+  resetFormulier();
 
   el("formulier").hidden = true;
   el("maakWeek").hidden = true;
@@ -283,7 +322,7 @@ async function laadWeek() {
   el("werkdag").max = einde;
   el("werkdag").value = start;
 
-  const { data, error } = await db
+  const {data, error} = await db
     .from("roosterweken")
     .select("id,status")
     .eq("week_start", start)
@@ -297,23 +336,23 @@ async function laadWeek() {
   if (!data) {
     el("status").textContent =
       "Nog geen roosterweek aangemaakt.";
-
     el("maakWeek").hidden = false;
     return;
   }
 
   weekId = data.id;
+  weekStatus = data.status;
 
   el("status").textContent =
-    "Status: " + data.status;
+    "Status: " + weekStatus;
 
   el("formulier").hidden =
-    data.status !== "concept";
+    weekStatus !== "concept";
 
   const resultaat = await db
     .from("diensten")
     .select(
-      "medewerker_id,begint_op,eindigt_op,pauze_minuten"
+      "id,medewerker_id,begint_op,eindigt_op,pauze_minuten"
     )
     .eq("roosterweek_id", weekId)
     .order("begint_op");
@@ -323,44 +362,116 @@ async function laadWeek() {
     return;
   }
 
-  if (resultaat.data.length === 0) {
+  huidigeDiensten = resultaat.data;
+
+  if (!huidigeDiensten.length) {
     el("diensten").textContent =
       "Nog geen diensten ingepland.";
     return;
   }
 
-  for (const dienst of resultaat.data) {
+  for (const dienst of huidigeDiensten) {
     const regel = document.createElement("div");
     regel.className = "dienst";
 
-    const starttijd =
-      new Date(dienst.begint_op);
+    const naam = document.createElement("strong");
+    naam.textContent =
+      namen[dienst.medewerker_id] || "Medewerker";
 
-    const eindtijd =
-      new Date(dienst.eindigt_op);
-
-    const tijd = t =>
-      t.toLocaleTimeString("nl-NL", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-
-    regel.textContent =
-      (namen[dienst.medewerker_id] ||
-       "Medewerker") +
-      " — " +
-      starttijd.toLocaleDateString("nl-NL") +
-      " | " + tijd(starttijd) +
-      " - " + tijd(eindtijd) +
+    const informatie = document.createElement("p");
+    informatie.textContent =
+      lokaleDatum(dienst.begint_op) +
+      " | " + lokaleTijd(dienst.begint_op) +
+      " - " + lokaleTijd(dienst.eindigt_op) +
       " | Pauze: " +
       dienst.pauze_minuten + " minuten";
+
+    regel.append(naam, informatie);
+
+    if (weekStatus === "concept") {
+      const knoppen = document.createElement("div");
+      knoppen.className = "dienstknoppen";
+
+      const wijzigen = document.createElement("button");
+      wijzigen.textContent = "✏️ Wijzigen";
+      wijzigen.className = "secundair";
+      wijzigen.onclick = () => wijzigDienst(dienst.id);
+
+      const verwijderen = document.createElement("button");
+      verwijderen.textContent = "🗑 Verwijderen";
+      verwijderen.className = "verwijderen";
+      verwijderen.onclick = () => verwijderDienst(dienst.id);
+
+      knoppen.append(wijzigen, verwijderen);
+      regel.appendChild(knoppen);
+    }
 
     el("diensten").appendChild(regel);
   }
 }
 
+function wijzigDienst(id) {
+  const dienst = huidigeDiensten.find(d => d.id === id);
+  if (!dienst || weekStatus !== "concept") return;
+
+  bewerkId = id;
+
+  el("medewerker").value = dienst.medewerker_id;
+  el("werkdag").value = lokaleDatum(dienst.begint_op);
+  el("begin").value = lokaleTijd(dienst.begint_op);
+  el("eind").value = lokaleTijd(dienst.eindigt_op);
+  el("pauze").value = dienst.pauze_minuten;
+
+  el("formulierTitel").textContent =
+    "Dienst wijzigen";
+
+  el("opslaan").textContent =
+    "Wijzigingen opslaan";
+
+  el("annuleren").hidden = false;
+
+  el("formulier").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+async function verwijderDienst(id) {
+  if (weekStatus !== "concept") return;
+
+  const akkoord = confirm(
+    "Weet je zeker dat je deze dienst wilt verwijderen?"
+  );
+
+  if (!akkoord) return;
+
+  try {
+    await controleerConcept();
+
+    const {data, error} = await db
+      .from("diensten")
+      .delete()
+      .eq("id", id)
+      .eq("roosterweek_id", weekId)
+      .select("id");
+
+    if (error) throw error;
+
+    if (!data.length) {
+      throw new Error(
+        "Dienst niet verwijderd. Controleer de rechten."
+      );
+    }
+
+    await laadWeek();
+    bericht("Dienst verwijderd.");
+  } catch(e) {
+    bericht(e.message);
+  }
+}
+
 async function toonDashboard() {
-  const { data: { user }, error: authError } =
+  const {data:{user}, error:authError} =
     await db.auth.getUser();
 
   if (authError || !user) {
@@ -371,7 +482,7 @@ async function toonDashboard() {
     return;
   }
 
-  const { data: profiel, error } = await db
+  const {data:profiel, error} = await db
     .from("profielen")
     .select("naam,rol")
     .eq("id", user.id)
@@ -385,8 +496,7 @@ async function toonDashboard() {
   el("dashboard").hidden = false;
 
   el("welkom").textContent =
-    "Welkom, " +
-    (profiel.naam || "medewerker");
+    "Welkom, " + (profiel.naam || "medewerker");
 
   el("rol").textContent =
     "Je bent ingelogd als " + profiel.rol;
@@ -399,11 +509,10 @@ async function toonDashboard() {
 
   if (profiel.rol !== "planner") return;
 
-  const { data: medewerkers, error: fout } =
-    await db
-      .from("profielen")
-      .select("id,naam")
-      .order("naam");
+  const {data:medewerkers, error:fout} = await db
+    .from("profielen")
+    .select("id,naam")
+    .order("naam");
 
   if (fout) throw fout;
 
@@ -413,48 +522,37 @@ async function toonDashboard() {
   for (const m of medewerkers) {
     namen[m.id] = m.naam || "Medewerker";
 
-    const optie =
-      document.createElement("option");
-
+    const optie = document.createElement("option");
     optie.value = m.id;
     optie.textContent = namen[m.id];
-
     el("medewerker").appendChild(optie);
   }
 
   await laadWeek();
 }
 
-el("datum").value =
-  datumTekst(new Date());
+el("datum").value = datumTekst(new Date());
 
-el("datum").addEventListener(
-  "change",
-  () => laadWeek().catch(
-    e => bericht(e.message)
-  )
+el("datum").addEventListener("change", () =>
+  laadWeek().catch(e => bericht(e.message))
 );
 
 el("loginForm").onsubmit = async e => {
   e.preventDefault();
 
-  const knop =
-    e.target.querySelector("button");
-
+  const knop = e.target.querySelector("button");
   knop.disabled = true;
   el("loginMelding").textContent = "";
 
   try {
-    const { error } =
-      await db.auth.signInWithPassword({
-        email: el("email").value,
-        password: el("password").value
-      });
+    const {error} = await db.auth.signInWithPassword({
+      email: el("email").value,
+      password: el("password").value
+    });
 
     if (error) throw error;
-
     await toonDashboard();
-  } catch (err) {
+  } catch(err) {
     el("loginMelding").textContent =
       "Inloggen mislukt: " + err.message;
   } finally {
@@ -463,72 +561,97 @@ el("loginForm").onsubmit = async e => {
 };
 
 el("maakWeek").onclick = async () => {
-  const { error } = await db
+  const {error} = await db
     .from("roosterweken")
     .insert({
-      week_start:
-        maandag(el("datum").value),
+      week_start: maandag(el("datum").value),
       status: "concept"
     });
 
-  if (error) {
-    bericht(error.message);
-  } else {
-    await laadWeek();
-  }
+  if (error) bericht(error.message);
+  else await laadWeek();
 };
+
+el("annuleren").onclick = resetFormulier;
 
 el("dienstForm").onsubmit = async e => {
   e.preventDefault();
 
-  if (!weekId) return;
+  const knop = el("opslaan");
+  knop.disabled = true;
 
-  const dag = el("werkdag").value;
-  const week = maandag(el("datum").value);
+  try {
+    await controleerConcept();
 
-  if (
-    dag < week ||
-    dag > verschuif(week, 6)
-  ) {
-    bericht("Kies een datum binnen deze week.");
-    return;
-  }
+    const dag = el("werkdag").value;
+    const week = maandag(el("datum").value);
 
-  const start = new Date(
-    dag + "T" + el("begin").value
-  );
+    if (dag < week || dag > verschuif(week,6)) {
+      throw new Error(
+        "Kies een datum binnen deze week."
+      );
+    }
 
-  const eind = new Date(
-    dag + "T" + el("eind").value
-  );
+    const start = new Date(
+      dag + "T" + el("begin").value
+    );
 
-  if (eind <= start) {
-    bericht("Controleer de werktijden.");
-    return;
-  }
+    const eind = new Date(
+      dag + "T" + el("eind").value
+    );
 
-  const { error } = await db
-    .from("diensten")
-    .insert({
-      medewerker_id:
-        el("medewerker").value,
+    const pauze = Number(el("pauze").value);
 
-      roosterweek_id: weekId,
+    if (
+      eind <= start ||
+      pauze < 0 ||
+      pauze >= (eind - start) / 60000
+    ) {
+      throw new Error(
+        "Controleer de tijden en pauzeduur."
+      );
+    }
 
-      begint_op:
-        start.toISOString(),
+    const gegevens = {
+      medewerker_id: el("medewerker").value,
+      begint_op: start.toISOString(),
+      eindigt_op: eind.toISOString(),
+      pauze_minuten: pauze
+    };
 
-      eindigt_op:
-        eind.toISOString(),
+    let resultaat;
 
-      pauze_minuten:
-        Number(el("pauze").value)
-    });
+    if (bewerkId !== null) {
+      resultaat = await db
+        .from("diensten")
+        .update(gegevens)
+        .eq("id", bewerkId)
+        .eq("roosterweek_id", weekId)
+        .select("id");
+    } else {
+      resultaat = await db
+        .from("diensten")
+        .insert({
+          ...gegevens,
+          roosterweek_id: weekId
+        })
+        .select("id");
+    }
 
-  if (error) {
-    bericht(error.message);
-  } else {
+    if (resultaat.error) throw resultaat.error;
+
+    if (!resultaat.data.length) {
+      throw new Error(
+        "Opslaan niet gelukt. Controleer de rechten."
+      );
+    }
+
     await laadWeek();
+    bericht("Dienst succesvol opgeslagen.");
+  } catch(err) {
+    bericht(err.message);
+  } finally {
+    knop.disabled = false;
   }
 };
 
@@ -547,6 +670,5 @@ toonDashboard().catch(err => {
     "Fout: " + err.message;
 });
 </script>
-
 </body>
 </html>
