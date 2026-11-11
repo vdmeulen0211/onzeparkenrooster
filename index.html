@@ -1,31 +1,157 @@
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pretpark Personeelsplanning</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f7fb;
-      padding: 20px;
-      text-align: center;
-    }
-    h1 { color: #167b65; }
-    .kaart {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-top: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onze FamilieParken</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f3f7fb;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+}
+h1 { color: #167b65; }
+.kaart {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  max-width: 420px;
+  margin: 30px auto;
+  box-shadow: 0 3px 15px #0001;
+}
+input, button {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  margin: 9px 0;
+  border-radius: 8px;
+  font-size: 16px;
+}
+input { border: 1px solid #ccc; }
+button {
+  background: #167b65;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:disabled { opacity: .6; }
+#melding { overflow-wrap: anywhere; }
+</style>
 </head>
 <body>
-  <h1>🎡 Pretpark Personeelsplanning</h1>
-  <div class="kaart">
-    <h2>Welkom!</h2>
-    <p>Hier komt ons personeelsrooster.</p>
-    <p>Medewerkers, diensten en attracties.</p>
-  </div>
+
+<h1>🎡 Onze FamilieParken</h1>
+<p>Personeelsplanning</p>
+
+<div class="kaart" id="login">
+  <h2>Inloggen</h2>
+  <form id="formulier">
+    <input id="email" type="email"
+      placeholder="E-mailadres"
+      autocomplete="username" required>
+    <input id="wachtwoord" type="password"
+      placeholder="Wachtwoord"
+      autocomplete="current-password" required>
+    <button id="loginKnop" type="submit">
+      Inloggen
+    </button>
+  </form>
+  <p id="melding" role="status"></p>
+</div>
+
+<div class="kaart" id="dashboard" hidden>
+  <h2 id="welkom">Welkom</h2>
+  <p id="rol"></p>
+  <p>Het rooster wordt binnenkort toegevoegd.</p>
+  <button id="uitloggen">Uitloggen</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const url = "https://tvghmaltprpseimlzcbi.supabase.co";
+const sleutel = "sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI";
+
+const db = window.supabase.createClient(url, sleutel);
+
+const login = document.getElementById("login");
+const dashboard = document.getElementById("dashboard");
+const melding = document.getElementById("melding");
+
+async function toonGebruiker() {
+  const { data: { user } } = await db.auth.getUser();
+
+  if (!user) {
+    login.hidden = false;
+    dashboard.hidden = true;
+    return;
+  }
+
+  const { data, error } = await db
+    .from("profielen")
+    .select("naam, rol")
+    .eq("id", user.id)
+    .single();
+
+  if (error || !data) {
+    await db.auth.signOut();
+    melding.textContent = "Geen geldig profiel gevonden.";
+    login.hidden = false;
+    dashboard.hidden = true;
+    return;
+  }
+
+  document.getElementById("welkom").textContent =
+    "Welkom, " + (data.naam || "medewerker");
+
+  document.getElementById("rol").textContent =
+    data.rol === "planner"
+      ? "Je bent ingelogd als planner."
+      : "Je bent ingelogd als medewerker.";
+
+  login.hidden = true;
+  dashboard.hidden = false;
+}
+
+document.getElementById("formulier")
+  .addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const knop = document.getElementById("loginKnop");
+    knop.disabled = true;
+    melding.textContent = "Bezig met inloggen...";
+
+    try {
+      const { error } = await db.auth.signInWithPassword({
+        email: document.getElementById("email").value,
+        password: document.getElementById("wachtwoord").value
+      });
+
+      if (error) {
+        melding.textContent = "Inloggen mislukt. Controleer je gegevens.";
+      } else {
+        melding.textContent = "";
+        await toonGebruiker();
+      }
+    } catch {
+      melding.textContent = "Er is een verbindingsfout.";
+    } finally {
+      knop.disabled = false;
+    }
+  });
+
+document.getElementById("uitloggen")
+  .addEventListener("click", async () => {
+    await db.auth.signOut();
+    document.getElementById("wachtwoord").value = "";
+    login.hidden = false;
+    dashboard.hidden = true;
+  });
+
+toonGebruiker().catch(() => {
+  melding.textContent = "Kan geen verbinding maken.";
+});
+</script>
 </body>
 </html>
