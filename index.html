@@ -2,10 +2,8 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
- content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OnzeParkenRooster</title>
-
 <style>
 * { box-sizing: border-box; }
 
@@ -66,6 +64,12 @@ button.verwijderen {
   background: #b73535;
 }
 
+button.publiceren {
+  background: #167b65;
+  font-weight: bold;
+  margin-top: 16px;
+}
+
 label {
   display: block;
   font-weight: bold;
@@ -94,7 +98,6 @@ label {
   background: #edf5f0;
   padding: 12px;
   border-radius: 8px;
-  margin: 15px 0;
 }
 
 #melding, #loginMelding {
@@ -143,7 +146,6 @@ footer {
 
   <label>Kies een week</label>
   <input type="date" id="datum">
-
   <h3 id="weekTitel"></h3>
   <p class="status" id="status"></p>
 
@@ -155,7 +157,6 @@ footer {
     <h3 id="formulierTitel">
       Nieuwe dienst toevoegen
     </h3>
-
     <form id="dienstForm">
       <label>Medewerker</label>
       <select id="medewerker" required></select>
@@ -187,18 +188,23 @@ footer {
 
   <h3>Ingeplande diensten</h3>
   <div id="diensten"></div>
+
+  <button id="publiceerWeek"
+    class="publiceren" hidden>
+    📢 Weekrooster publiceren
+  </button>
+
+  <p id="publicatieInfo"></p>
   <p id="melding" role="status"></p>
 </section>
 
 <section class="kaart" id="werknemer" hidden>
   <h2>Mijn rooster</h2>
-  <p>
-    Je persoonlijke rooster wordt
-    binnenkort toegevoegd.
-  </p>
+  <p>Hier verschijnen later je eigen
+     gepubliceerde diensten.</p>
 </section>
 
-<footer>Versie 1.2.1</footer>
+<footer>Versie 1.2.2</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
@@ -207,7 +213,7 @@ const SUPABASE_URL =
   "https://tvghmaltprpseimlzcbi.supabase.co";
 
 const SUPABASE_KEY =
-  "sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI";
+  "- [ ] sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI";
 
 const db = window.supabase.createClient(
   SUPABASE_URL,
@@ -309,6 +315,8 @@ async function laadWeek() {
 
   el("formulier").hidden = true;
   el("maakWeek").hidden = true;
+  el("publiceerWeek").hidden = true;
+  el("publicatieInfo").textContent = "";
   el("diensten").replaceChildren();
   bericht("");
 
@@ -324,7 +332,7 @@ async function laadWeek() {
 
   const {data, error} = await db
     .from("roosterweken")
-    .select("id,status")
+    .select("id,status,gepubliceerd_op")
     .eq("week_start", start)
     .maybeSingle();
 
@@ -349,6 +357,17 @@ async function laadWeek() {
   el("formulier").hidden =
     weekStatus !== "concept";
 
+  if (weekStatus === "gepubliceerd") {
+    const tijd = data.gepubliceerd_op
+      ? new Date(data.gepubliceerd_op)
+          .toLocaleString("nl-NL")
+      : "Onbekend";
+
+    el("publicatieInfo").textContent =
+      "✅ Gepubliceerd op " + tijd +
+      ". Dit rooster is vergrendeld.";
+  }
+
   const resultaat = await db
     .from("diensten")
     .select(
@@ -368,6 +387,10 @@ async function laadWeek() {
     el("diensten").textContent =
       "Nog geen diensten ingepland.";
     return;
+  }
+
+  if (weekStatus === "concept") {
+    el("publiceerWeek").hidden = false;
   }
 
   for (const dienst of huidigeDiensten) {
@@ -411,15 +434,20 @@ async function laadWeek() {
 }
 
 function wijzigDienst(id) {
-  const dienst = huidigeDiensten.find(d => d.id === id);
+  const dienst =
+    huidigeDiensten.find(d => d.id === id);
+
   if (!dienst || weekStatus !== "concept") return;
 
   bewerkId = id;
 
   el("medewerker").value = dienst.medewerker_id;
-  el("werkdag").value = lokaleDatum(dienst.begint_op);
-  el("begin").value = lokaleTijd(dienst.begint_op);
-  el("eind").value = lokaleTijd(dienst.eindigt_op);
+  el("werkdag").value =
+    lokaleDatum(dienst.begint_op);
+  el("begin").value =
+    lokaleTijd(dienst.begint_op);
+  el("eind").value =
+    lokaleTijd(dienst.eindigt_op);
   el("pauze").value = dienst.pauze_minuten;
 
   el("formulierTitel").textContent =
@@ -439,11 +467,9 @@ function wijzigDienst(id) {
 async function verwijderDienst(id) {
   if (weekStatus !== "concept") return;
 
-  const akkoord = confirm(
+  if (!confirm(
     "Weet je zeker dat je deze dienst wilt verwijderen?"
-  );
-
-  if (!akkoord) return;
+  )) return;
 
   try {
     await controleerConcept();
@@ -467,6 +493,49 @@ async function verwijderDienst(id) {
     bericht("Dienst verwijderd.");
   } catch(e) {
     bericht(e.message);
+  }
+}
+
+async function publiceerWeek() {
+  if (!weekId || weekStatus !== "concept") return;
+
+  const akkoord = confirm(
+    "Wil je dit weekrooster publiceren?\n\n" +
+    "Medewerkers kunnen daarna hun eigen " +
+    "diensten bekijken.\n\n" +
+    "Je kunt gepubliceerde diensten " +
+    "voorlopig niet meer aanpassen.\n\n" +
+    "Er worden nog geen e-mails verstuurd."
+  );
+
+  if (!akkoord) return;
+
+  const knop = el("publiceerWeek");
+  knop.disabled = true;
+
+  try {
+    const {data, error} = await db
+      .from("roosterweken")
+      .update({status:"gepubliceerd"})
+      .eq("id", weekId)
+      .eq("status", "concept")
+      .select("id,status");
+
+    if (error) throw error;
+
+    if (!data || data.length !== 1) {
+      throw new Error(
+        "Publiceren niet gelukt. " +
+        "Vernieuw het rooster en probeer opnieuw."
+      );
+    }
+
+    await laadWeek();
+    bericht("✅ Weekrooster gepubliceerd!");
+  } catch(err) {
+    bericht(err.message);
+  } finally {
+    knop.disabled = false;
   }
 }
 
@@ -573,6 +642,8 @@ el("maakWeek").onclick = async () => {
 };
 
 el("annuleren").onclick = resetFormulier;
+
+el("publiceerWeek").onclick = publiceerWeek;
 
 el("dienstForm").onsubmit = async e => {
   e.preventDefault();
