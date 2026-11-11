@@ -3,154 +3,378 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Onze FamilieParken</title>
+<meta name="viewport"
+ content="width=device-width,initial-scale=1">
+<title>OnzeParkenRooster</title>
 <style>
+* { box-sizing: border-box; }
 body {
   font-family: Arial, sans-serif;
   background: #f3f7fb;
   margin: 0;
-  padding: 24px;
-  text-align: center;
+  padding: 18px;
+  color: #24343a;
 }
-h1 { color: #167b65; }
+h1 { color: #167b65; text-align: center; }
+.subtitle { text-align: center; }
 .kaart {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 22px;
   background: white;
-  padding: 25px;
-  border-radius: 16px;
-  max-width: 420px;
-  margin: 30px auto;
-  box-shadow: 0 3px 15px #0001;
+  border-radius: 15px;
 }
-input, button {
-  box-sizing: border-box;
+input, select, button {
   width: 100%;
-  padding: 14px;
-  margin: 9px 0;
-  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
   font-size: 16px;
+  border-radius: 8px;
 }
-input { border: 1px solid #ccc; }
+input, select { border: 1px solid #ccc; }
 button {
+  border: 0;
   background: #167b65;
   color: white;
-  border: none;
-  cursor: pointer;
 }
-button:disabled { opacity: .6; }
+button:disabled { opacity: .5; }
+.dienst {
+  padding: 12px 0;
+  border-bottom: 1px solid #ddd;
+}
+[hidden] { display: none !important; }
 #melding { overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
 
 <h1>🎡 Onze FamilieParken</h1>
-<p>Personeelsplanning</p>
+<p class="subtitle">Personeelsplanning</p>
 
-<div class="kaart" id="login">
+<section class="kaart" id="login">
   <h2>Inloggen</h2>
-  <form id="formulier">
+  <form id="loginForm">
     <input id="email" type="email"
-      placeholder="E-mailadres"
-      autocomplete="username" required>
-    <input id="wachtwoord" type="password"
-      placeholder="Wachtwoord"
-      autocomplete="current-password" required>
-    <button id="loginKnop" type="submit">
-      Inloggen
-    </button>
+      placeholder="E-mailadres" required>
+    <input id="password" type="password"
+      placeholder="Wachtwoord" required>
+    <button type="submit">Inloggen</button>
   </form>
-  <p id="melding" role="status"></p>
-</div>
+</section>
 
-<div class="kaart" id="dashboard" hidden>
+<section class="kaart" id="dashboard" hidden>
   <h2 id="welkom">Welkom</h2>
   <p id="rol"></p>
-  <p>Het rooster wordt binnenkort toegevoegd.</p>
-  <button id="uitloggen">Uitloggen</button>
-</div>
+  <button id="logout">Uitloggen</button>
+</section>
+
+<section class="kaart" id="planner" hidden>
+  <h2>📅 Weekrooster</h2>
+
+  <label>Kies een datum</label>
+  <input type="date" id="datum">
+  <h3 id="weekTitel"></h3>
+  <p id="status"></p>
+
+  <button id="maakWeek">
+    Conceptweek aanmaken
+  </button>
+
+  <div id="formulier" hidden>
+    <h3>Dienst toevoegen</h3>
+    <form id="dienstForm">
+      <label>Medewerker</label>
+      <select id="medewerker" required></select>
+
+      <label>Werkdag</label>
+      <input type="date" id="werkdag" required>
+
+      <label>Begintijd</label>
+      <input type="time" id="begin"
+        value="09:00" required>
+
+      <label>Eindtijd</label>
+      <input type="time" id="eind"
+        value="17:00" required>
+
+      <label>Pauze in minuten</label>
+      <input type="number" id="pauze"
+        value="30" min="0" required>
+
+      <button type="submit">
+        Dienst opslaan
+      </button>
+    </form>
+  </div>
+
+  <h3>Ingeplande diensten</h3>
+  <div id="diensten"></div>
+  <p id="melding" role="status"></p>
+  <p>Publiceren en e-mailmeldingen
+     voegen we hierna toe.</p>
+</section>
+
+<section class="kaart" id="werknemer" hidden>
+  <h2>Mijn rooster</h2>
+  <p>Je persoonlijke rooster wordt
+     hier binnenkort weergegeven.</p>
+</section>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const url = "https://tvghmaltprpseimlzcbi.supabase.co";
-const sleutel = "sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI";
+const db = window.supabase.createClient(
+  "https://tvghmaltprpseimlzcbi.supabase.co",
+  "sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI"
+);
 
-const db = window.supabase.createClient(url, sleutel);
+const el = id => document.getElementById(id);
+let weekId = null;
+let namen = {};
 
-const login = document.getElementById("login");
-const dashboard = document.getElementById("dashboard");
-const melding = document.getElementById("melding");
-
-async function toonGebruiker() {
-  const { data: { user } } = await db.auth.getUser();
-
-  if (!user) {
-    login.hidden = false;
-    dashboard.hidden = true;
-    return;
-  }
-
-  const { data, error } = await db
-    .from("profielen")
-    .select("naam, rol")
-    .eq("id", user.id)
-    .single();
-
-  if (error || !data) {
-    await db.auth.signOut();
-    melding.textContent = "Geen geldig profiel gevonden.";
-    login.hidden = false;
-    dashboard.hidden = true;
-    return;
-  }
-
-  document.getElementById("welkom").textContent =
-    "Welkom, " + (data.naam || "medewerker");
-
-  document.getElementById("rol").textContent =
-    data.rol === "planner"
-      ? "Je bent ingelogd als planner."
-      : "Je bent ingelogd als medewerker.";
-
-  login.hidden = true;
-  dashboard.hidden = false;
+function datumTekst(d) {
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") +
+    "-" + String(d.getDate()).padStart(2,"0");
 }
 
-document.getElementById("formulier")
-  .addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const knop = document.getElementById("loginKnop");
-    knop.disabled = true;
-    melding.textContent = "Bezig met inloggen...";
+function verschuif(s, aantal) {
+  const d = new Date(s + "T12:00:00");
+  d.setDate(d.getDate() + aantal);
+  return datumTekst(d);
+}
 
-    try {
-      const { error } = await db.auth.signInWithPassword({
-        email: document.getElementById("email").value,
-        password: document.getElementById("wachtwoord").value
+function maandag(s) {
+  const d = new Date(s + "T12:00:00");
+  d.setDate(d.getDate() -
+    ((d.getDay()+6)%7));
+  return datumTekst(d);
+}
+
+function bericht(s) {
+  el("melding").textContent = s;
+}
+
+async function laadWeek() {
+  weekId = null;
+  el("formulier").hidden = true;
+  el("maakWeek").hidden = true;
+  el("diensten").replaceChildren();
+  bericht("");
+
+  const start = maandag(el("datum").value);
+  const einde = verschuif(start, 6);
+
+  el("weekTitel").textContent =
+    start + " t/m " + einde;
+
+  el("werkdag").min = start;
+  el("werkdag").max = einde;
+  el("werkdag").value = start;
+
+  const {data, error} = await db
+    .from("roosterweken")
+    .select("id,status")
+    .eq("week_start", start)
+    .maybeSingle();
+
+  if (error) {
+    bericht(error.message);
+    return;
+  }
+
+  if (!data) {
+    el("status").textContent = "Nog geen week";
+    el("maakWeek").hidden = false;
+    return;
+  }
+
+  weekId = data.id;
+  el("status").textContent =
+    "Status: " + data.status;
+
+  el("formulier").hidden =
+    data.status !== "concept";
+
+  const resultaat = await db
+    .from("diensten")
+    .select("medewerker_id,begint_op,eindigt_op,pauze_minuten")
+    .eq("roosterweek_id", weekId)
+    .order("begint_op");
+
+  if (resultaat.error) {
+    bericht(resultaat.error.message);
+    return;
+  }
+
+  if (!resultaat.data.length) {
+    el("diensten").textContent =
+      "Nog geen diensten ingepland.";
+    return;
+  }
+
+  for (const d of resultaat.data) {
+    const regel = document.createElement("div");
+    regel.className = "dienst";
+
+    const starttijd = new Date(d.begint_op);
+    const eindtijd = new Date(d.eindigt_op);
+    const tijd = t => t.toLocaleTimeString(
+      "nl-NL", {hour:"2-digit",minute:"2-digit"}
+    );
+
+    regel.textContent =
+      (namen[d.medewerker_id] || "Medewerker") +
+      " — " +
+      starttijd.toLocaleDateString("nl-NL") +
+      " | " + tijd(starttijd) +
+      " - " + tijd(eindtijd) +
+      " | Pauze: " + d.pauze_minuten + " min";
+
+    el("diensten").appendChild(regel);
+  }
+}
+
+async function toonDashboard() {
+  const {data:{user}} = await db.auth.getUser();
+
+  if (!user) {
+    el("login").hidden = false;
+    el("dashboard").hidden = true;
+    el("planner").hidden = true;
+    el("werknemer").hidden = true;
+    return;
+  }
+
+  const {data:profiel, error} = await db
+    .from("profielen")
+    .select("naam,rol")
+    .eq("id",user.id)
+    .single();
+
+  if (error || !profiel) {
+    throw new Error("Geen geldig profiel.");
+  }
+
+  el("login").hidden = true;
+  el("dashboard").hidden = false;
+  el("welkom").textContent =
+    "Welkom, " + (profiel.naam || "medewerker");
+  el("rol").textContent =
+    "Ingelogd als " + profiel.rol;
+
+  el("planner").hidden =
+    profiel.rol !== "planner";
+  el("werknemer").hidden =
+    profiel.rol !== "medewerker";
+
+  if (profiel.rol !== "planner") return;
+
+  const {data:medewerkers, error:fout} = await db
+    .from("profielen")
+    .select("id,naam")
+    .order("naam");
+
+  if (fout) throw fout;
+
+  namen = {};
+  el("medewerker").replaceChildren();
+
+  for (const m of medewerkers) {
+    namen[m.id] = m.naam || "Medewerker";
+    const optie = document.createElement("option");
+    optie.value = m.id;
+    optie.textContent = namen[m.id];
+    el("medewerker").appendChild(optie);
+  }
+
+  await laadWeek();
+}
+
+el("datum").value = datumTekst(new Date());
+
+el("datum").addEventListener("change",
+  () => laadWeek().catch(e => bericht(e.message))
+);
+
+el("loginForm").onsubmit = async e => {
+  e.preventDefault();
+  const knop = e.target.querySelector("button");
+  knop.disabled = true;
+
+  try {
+    const {error} = await db.auth
+      .signInWithPassword({
+        email:el("email").value,
+        password:el("password").value
       });
 
-      if (error) {
-        melding.textContent = "Inloggen mislukt. Controleer je gegevens.";
-      } else {
-        melding.textContent = "";
-        await toonGebruiker();
-      }
-    } catch {
-      melding.textContent = "Er is een verbindingsfout.";
-    } finally {
-      knop.disabled = false;
-    }
-  });
+    if (error) throw error;
+    await toonDashboard();
+  } catch(err) {
+    alert("Inloggen mislukt: " + err.message);
+  } finally {
+    knop.disabled = false;
+  }
+};
 
-document.getElementById("uitloggen")
-  .addEventListener("click", async () => {
-    await db.auth.signOut();
-    document.getElementById("wachtwoord").value = "";
-    login.hidden = false;
-    dashboard.hidden = true;
-  });
+el("maakWeek").onclick = async () => {
+  const {error} = await db
+    .from("roosterweken")
+    .insert({
+      week_start:maandag(el("datum").value),
+      status:"concept"
+    });
 
-toonGebruiker().catch(() => {
-  melding.textContent = "Kan geen verbinding maken.";
+  if (error) bericht(error.message);
+  else await laadWeek();
+};
+
+el("dienstForm").onsubmit = async e => {
+  e.preventDefault();
+  if (!weekId) return;
+
+  const dag = el("werkdag").value;
+  const week = maandag(el("datum").value);
+
+  if (dag < week || dag > verschuif(week,6)) {
+    bericht("Kies een datum in deze week.");
+    return;
+  }
+
+  const start = new Date(
+    dag + "T" + el("begin").value
+  );
+  const eind = new Date(
+    dag + "T" + el("eind").value
+  );
+
+  if (eind <= start) {
+    bericht("Controleer de werktijden.");
+    return;
+  }
+
+  const {error} = await db
+    .from("diensten")
+    .insert({
+      medewerker_id:el("medewerker").value,
+      roosterweek_id:weekId,
+      begint_op:start.toISOString(),
+      eindigt_op:eind.toISOString(),
+      pauze_minuten:Number(el("pauze").value)
+    });
+
+  if (error) bericht(error.message);
+  else await laadWeek();
+};
+
+el("logout").onclick = async () => {
+  await db.auth.signOut();
+  el("password").value = "";
+  await toonDashboard();
+};
+
+toonDashboard().catch(err => {
+  alert("Fout: " + err.message);
 });
 </script>
 </body>
