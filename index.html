@@ -10,10 +10,11 @@
 /* Tijdlijn: medewerkerkolom blijft zichtbaar tijdens horizontaal scrollen. */
 .tijdlijn-scroll{overflow-x:auto;max-width:100%;border:1px solid #e2e9ec;border-radius:10px}.tijdlijn{min-width:970px}.tijdlijn-kop,.tijdlijn-rij{display:grid;grid-template-columns:145px 1fr;min-height:52px;border-bottom:1px solid #e7edef}.tijdlijn-naam{position:sticky;left:0;z-index:2;background:#fff;display:flex;align-items:center;padding:10px;border-right:1px solid #e1e7e9;font-size:13px;font-weight:600}.tijdlijn-kop .tijdlijn-naam{background:#eef5f2}.tijdlijn-veld{position:relative;background:repeating-linear-gradient(to right,#fff 0,#fff calc(100% / 17 - 1px),#edf1f2 calc(100% / 17 - 1px),#edf1f2 calc(100% / 17))}.uren-kop{display:grid;grid-template-columns:repeat(17,1fr);background:#eef5f2;font-size:11px;align-items:center;text-align:center}.balk{position:absolute;top:10px;height:31px;border-radius:5px;background:#208d7a;color:white;display:flex;align-items:center;padding:0 7px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.week-grid{overflow:auto}.week-tabel{min-width:680px;width:100%;border-collapse:collapse;font-size:13px}.week-tabel th,.week-tabel td{border:1px solid #e0e7e9;padding:8px;text-align:left;vertical-align:top}.week-tabel th{background:#eef5f2}.week-tabel td:first-child{font-weight:600;min-width:120px}.blok{background:#e2f4ef;border-radius:5px;padding:6px;margin:3px 0;color:#126655;font-size:12px}.maand-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.maand-dag{background:#f3f7f8;border-radius:7px;min-height:70px;padding:6px;font-size:12px;overflow:hidden}.maand-dag strong{display:block}.maand-dag small{color:#44675e}.maand-leeg{background:transparent}@media(max-width:600px){body{padding:10px}.kaart{padding:15px}.kolommen{grid-template-columns:1fr}.maand-dag{min-height:55px;font-size:10px;padding:4px}.maand-dag small{font-size:9px}}
 
-/* Thema's: geÃ¯nspireerd op de parken; geen officiÃ«le logo's ingebed. */
+/* Herkenbare, niet-officiÃ«le kleurthema's voor de drie onafhankelijke locaties. */
 :root{--park:#167b65;--park-soft:#e2f4ef;--park-ink:#126655}
 body[data-park="waarbeek"]{--park:#df6c24;--park-soft:#fff1dc;--park-ink:#793b13;background:#fffaf2}
-body[data-park="drouwenerzand"]{--park:#167b58;--park-soft:#e4f5dd;--park-ink:#145a42;background:#f5fbef}
+body[data-park="zd"]{--park:#167b58;--park-soft:#e4f5dd;--park-ink:#145a42;background:#f5fbef}
+body[data-park="vp"]{--park:#176f8b;--park-soft:#e1f1f7;--park-ink:#18556b;background:#f2f9fc}
 body[data-admin="ja"]{--park:#42576e;--park-soft:#e9eff5;--park-ink:#33485c;background:#f2f6f8}
 h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 .status,.blok{background:var(--park-soft);color:var(--park-ink)}
@@ -32,7 +33,7 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 </head>
 <body>
 <div class="container">
-<header><h1 id="siteTitel">ð¡ Onze FamilieParken</h1><div>Personeelsplanning</div></header>
+<header><h1 id="siteTitel">OnzeParkenRooster</h1><div id="siteSubtitel">Personeelsplanning</div></header>
 <section class="kaart auth" id="login">
 <h2>Inloggen</h2><form id="loginForm"><label for="email">E-mailadres</label><input id="email" type="email" autocomplete="username" required><label for="password">Wachtwoord</label><input id="password" type="password" autocomplete="current-password" required><button type="submit">Inloggen</button></form><p id="loginMelding" class="fout" role="status"></p>
 </section>
@@ -50,10 +51,10 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 </section>
 <section class="kaart" id="medewerkersPane" hidden><h2>ð¥ Medewerkers per locatie</h2><p class="subtiel">Hieronder staan de bestaande accounts die aan de geselecteerde locatie zijn gekoppeld. Uitnodigen en accountbeheer komen in een volgende uitbreiding.</p><div class="weekrij"><h3 id="medewerkersLocatieTitel"></h3><button id="verversMedewerkers" class="secundair klein">Vernieuwen</button></div><p id="medewerkersMelding" role="status" class="fout"></p><div id="medewerkersLijst"></div></section>
 <section class="kaart" id="beheerPane" hidden><h2>ð Beheer locaties</h2><p class="subtiel">Alleen voor beheerders. Locaties toevoegen en hernoemen.</p><div id="locatiesLijst"></div><form id="locatieForm"><label for="nieuweLocatie">Nieuwe locatie</label><input id="nieuweLocatie" maxlength="100" placeholder="Naam van locatie" required><button type="submit">Locatie toevoegen</button></form><p class="fout" id="beheerMelding" role="status"></p>
-<div class="sectie"><h3>ð Openingstijden vastleggen</h3>
-<p class="subtiel">Vul de tijden over vanaf de officiÃ«le openingskalender. Deze tijden verschijnen dan bij alle roosters. Alleen beheerders kunnen ze wijzigen.</p>
+<div class="sectie"><h3>Openingstijden / servicetijden vastleggen</h3>
+<p class="subtiel">Voor WB en ZD kun je de tijden van de afzonderlijke officiÃ«le openingskalenders gebruiken. Voor VP vul je eigen service- of receptietijden in; die worden nooit automatisch overgenomen van ZD. Alleen beheerders kunnen tijden wijzigen.</p>
 <form id="openingForm">
-<label for="openingLocatie">Park</label><select id="openingLocatie" required></select>
+<label for="openingLocatie">Locatie / bedrijfsonderdeel</label><select id="openingLocatie" required></select>
 <label for="openingDatum">Datum</label><input id="openingDatum" type="date" required>
 <label for="openingStatus">Status</label><select id="openingStatus"><option value="open">Geopend</option><option value="gesloten">Gesloten</option></select>
 <div class="kolommen" id="openingTijden"><div><label for="openingVan">Open vanaf</label><input id="openingVan" type="time" value="10:00"></div><div><label for="openingTot">Open tot</label><input id="openingTot" type="time" value="17:00"></div></div>
@@ -61,7 +62,7 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <p id="openingBeheerMelding" class="subtiel" role="status"></p></div></section>
 </div>
 <section class="kaart" id="werknemer" hidden><h2>ð Mijn rooster</h2><label for="medewerkerDatum">Kies een week</label><input id="medewerkerDatum" type="date"><h3 id="medewerkerWeek"></h3><div id="medewerkerOpening"></div><p id="medewerkerStatus" role="status"></p><div id="medewerkerDiensten"></div><div class="status"><strong>Totaal geplande uren</strong><p id="medewerkerUren">0 uur</p></div></section>
-<footer>Versie 1.4.2</footer>
+<footer>Versie 1.4.3</footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -74,13 +75,21 @@ let namen = {}, huidigeDiensten = [];
 let huidigeLocatie = null, locaties = [], gebruikersRol = null;
 let openingCache = new Map();
 const PARKEN = {
- waarbeek:{naam:'De Waarbeek',url:'https://waarbeek.nl/openingstijden/'},
- drouwenerzand:{naam:'Drouwenerzand',url:'https://drouwenerzand.nl/openingstijden/'}
+ wb:{naam:'WB Â· Attractiepark De Waarbeek',url:'https://waarbeek.nl/openingstijden/',type:'Attractiepark'},
+ zd:{naam:'ZD Â· Attractiepark Drouwenerzand',url:'https://drouwenerzand.nl/openingstijden/',type:'Attractiepark'},
+ vp:{naam:'VP Â· Vakantiepark Drouwenerzand',url:null,type:'Vakantiepark'}
 };
-// Koppeling via de locatienaam, zodat geen willekeurige database-ID wordt aangenomen.
-function parkType(loc){const n=(loc?.naam||'').toLowerCase();
- if(n.includes('waarbeek')||n.includes('locatie 1')||n.includes('testpark 1'))return 'waarbeek';
- if(n.includes('drouwenerzand')||n.includes('locatie 2'))return 'drouwenerzand';return null;
+// Match op bestaande locatiecodes. VP en ZD zijn altijd gescheiden.
+// Geen numerieke ID's: de ID's van Supabase zijn hier niet verondersteld.
+function parkType(loc){
+ const n=(loc?.naam||'').trim().toLowerCase();
+ if(/^(wb)(\b|\s*[-â:])/.test(n)||n.includes('waarbeek'))return 'wb';
+ if(/^(vp)(\b|\s*[-â:])/.test(n)||n.includes('vakantiepark'))return 'vp';
+ if(/^(zd)(\b|\s*[-â:])/.test(n)||n.includes('attractiepark drouwenerzand'))return 'zd';
+ // Legacy namen uit de eerste versie van de app, alleen als nog aanwezig.
+ if(n==='locatie 1'||n==='testpark 1')return 'wb';
+ if(n==='locatie 2')return 'zd';
+ return null;
 }
 function actiefPark(){return locaties.find(x=>String(x.id)===String(huidigeLocatie))}
 function bronLink(locatie){const type=parkType(locatie);return type?PARKEN[type].url:null}
@@ -88,8 +97,12 @@ function parkStijl(locatie,admin=false){
  const type=parkType(locatie);
  document.body.dataset.park=type||'';
  document.body.dataset.admin=admin?'ja':'nee';
- el('siteTitel').textContent=admin?'ð¡ OnzeParkenRooster â Beheer':type?'ð¡ '+PARKEN[type].naam:'ð¡ OnzeParkenRooster';
- if(el('parkBanner')){el('parkBanner').hidden=admin||!type;if(type)el('parkBanner').textContent='ð¢ '+PARKEN[type].naam+' Â· Personeelsplanning'}
+ el('siteTitel').textContent=admin?'OnzeParkenRooster Â· Beheer':type?PARKEN[type].naam:'OnzeParkenRooster';
+ el('siteSubtitel').textContent=admin?'Centraal beheer Â· alle locaties':'Personeelsplanning';
+ if(el('parkBanner')){
+  el('parkBanner').hidden=admin||!type;
+  if(type)el('parkBanner').textContent=PARKEN[type].naam+' Â· '+(type==='vp'?'Eigen vakantieparkrooster':'Eigen attractieparkrooster');
+ }
 }
 async function haalOpening(locatieId,van,tot){
  if(locatieId===null||locatieId===undefined)return;
@@ -101,7 +114,7 @@ async function haalOpening(locatieId,van,tot){
 }
 function openingLabel(locatieId,dag){
  const x=openingCache.get(String(locatieId)+'|'+dag);
- if(!x)return 'Openingstijden nog niet ingevuld';
+ if(!x)return 'Tijden nog niet ingevuld';
  return x.status==='gesloten'?'Gesloten':('Open '+String(x.open_van).slice(0,5)+'â'+String(x.open_tot).slice(0,5));
 }
 function openingsDagen(doel,locatieId,van,aantal){
@@ -113,7 +126,7 @@ function openingsDagen(doel,locatieId,van,aantal){
   k.append(maak('strong',new Date(dag+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'})),maak('span',openingLabel(locatieId,dag)));
   grid.append(k);
  }host.append(grid);
- const url=bronLink(loc);if(url){const p=maak('p',undefined,'openingsbron'),a=maak('a','Controleer officiÃ«le openingskalender â');a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);host.append(p)}
+ const url=bronLink(loc);if(parkType(loc)==='vp')host.append(maak('p','VP: eigen servicetijden; geen koppeling met openingstijden van attractiepark ZD.','openingsbron'));if(url){const p=maak('p',undefined,'openingsbron'),a=maak('a','Controleer officiÃ«le openingskalender â');a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);host.append(p)}
 }
 function dagLabel(locatieId,dag){return openingLabel(locatieId,dag)}
 
