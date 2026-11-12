@@ -198,13 +198,26 @@ footer {
   <p id="melding" role="status"></p>
 </section>
 
+
 <section class="kaart" id="werknemer" hidden>
-  <h2>Mijn rooster</h2>
-  <p>Hier verschijnen later je eigen
-     gepubliceerde diensten.</p>
+  <h2>📅 Mijn rooster</h2>
+
+  <label>Kies een week</label>
+  <input type="date" id="medewerkerDatum">
+
+  <h3 id="medewerkerWeek"></h3>
+  <p id="medewerkerStatus" role="status"></p>
+
+  <div id="medewerkerDiensten"></div>
+
+  <div class="status">
+    <strong>Totaal geplande uren</strong>
+    <p id="medewerkerUren">0 uur</p>
+  </div>
 </section>
 
-<footer>Versie 1.2.2</footer>
+
+<footer>Versie 1.2.3</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
@@ -576,7 +589,13 @@ async function toonDashboard() {
   el("werknemer").hidden =
     profiel.rol !== "medewerker";
 
-  if (profiel.rol !== "planner") return;
+  if (profiel.rol === "medewerker") {
+  await laadMedewerkerRooster();
+  return;
+}
+
+if (profiel.rol !== "planner") return;
+
 
   const {data:medewerkers, error:fout} = await db
     .from("profielen")
@@ -740,6 +759,175 @@ toonDashboard().catch(err => {
   el("loginMelding").textContent =
     "Fout: " + err.message;
 });
+
+async function laadMedewerkerRooster() {
+  const datum = document.getElementById(
+    "medewerkerDatum"
+  );
+
+  const weekStart = maandag(datum.value);
+  const volgendeWeek = verschuif(weekStart, 7);
+
+  const titel = document.getElementById(
+    "medewerkerWeek"
+  );
+
+  const status = document.getElementById(
+    "medewerkerStatus"
+  );
+
+  const lijst = document.getElementById(
+    "medewerkerDiensten"
+  );
+
+  const uren = document.getElementById(
+    "medewerkerUren"
+  );
+
+  titel.textContent =
+    weekStart + " t/m " +
+    verschuif(weekStart, 6);
+
+  lijst.replaceChildren();
+  uren.textContent = "0 uur";
+  status.textContent = "Rooster laden...";
+
+  const {data: {user}, error:authError} =
+    await db.auth.getUser();
+
+  if (authError || !user) {
+    status.textContent =
+      "Log opnieuw in.";
+    return;
+  }
+
+  const {data:weken, error:weekError} =
+    await db
+      .from("roosterweken")
+      .select("id,status")
+      .eq("week_start", weekStart)
+      .eq("status", "gepubliceerd");
+
+  if (weekError) {
+    status.textContent = weekError.message;
+    return;
+  }
+
+  if (!weken || weken.length === 0) {
+    status.textContent =
+      "Voor deze week is geen rooster gepubliceerd.";
+    return;
+  }
+
+  const weekId = weken[0].id;
+
+  const van = new Date(
+    weekStart + "T00:00:00"
+  ).toISOString();
+
+  const tot = new Date(
+    volgendeWeek + "T00:00:00"
+  ).toISOString();
+
+  const {data:diensten, error} =
+    await db
+      .from("diensten")
+      .select(
+        "begint_op,eindigt_op,pauze_minuten"
+      )
+      .eq("medewerker_id", user.id)
+      .eq("roosterweek_id", weekId)
+      .gte("begint_op", van)
+      .lt("begint_op", tot)
+      .order("begint_op");
+
+  if (error) {
+    status.textContent = error.message;
+    return;
+  }
+
+  if (!diensten || diensten.length === 0) {
+    status.textContent =
+      "Je bent deze week niet ingeroosterd.";
+    return;
+  }
+
+  status.textContent = "Gepubliceerd";
+
+  let totaalMinuten = 0;
+
+  for (const dienst of diensten) {
+    const begin = new Date(dienst.begint_op);
+    const eind = new Date(dienst.eindigt_op);
+
+    const pauze = dienst.pauze_minuten || 0;
+
+    const netto = Math.max(
+      0,
+      Math.round((eind - begin) / 60000) -
+      pauze
+    );
+
+    totaalMinuten += netto;
+
+    const kaart = document.createElement("div");
+    kaart.className = "dienst";
+
+    const dag = document.createElement("strong");
+    dag.textContent =
+      begin.toLocaleDateString("nl-NL", {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+      });
+
+    const tijden = document.createElement("p");
+    tijden.textContent =
+      lokaleTijd(begin) + " – " +
+      lokaleTijd(eind);
+
+    const pauzetekst = document.createElement("p");
+    pauzetekst.textContent =
+      "Pauze: " + pauze + " minuten";
+
+    const nettotekst = document.createElement("p");
+    nettotekst.textContent =
+      "Netto gepland: " +
+      (netto / 60).toLocaleString("nl-NL", {
+        maximumFractionDigits: 2
+      }) + " uur";
+
+    kaart.append(
+      dag, tijden, pauzetekst, nettotekst
+    );
+
+    lijst.appendChild(kaart);
+  }
+
+  uren.textContent =
+    Math.floor(totaalMinuten / 60) +
+    " uur en " +
+    (totaalMinuten % 60) +
+    " minuten";
+}
+
+const medewerkerDatum =
+  document.getElementById("medewerkerDatum");
+
+medewerkerDatum.value =
+  datumTekst(new Date());
+
+medewerkerDatum.addEventListener(
+  "change",
+  () => laadMedewerkerRooster().catch(
+    e => {
+      document.getElementById(
+        "medewerkerStatus"
+      ).textContent = e.message;
+    }
+  )
+);
+
 </script>
 </body>
 </html>
