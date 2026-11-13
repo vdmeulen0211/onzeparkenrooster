@@ -73,7 +73,7 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <p id="openingBeheerMelding" class="subtiel" role="status"></p></div></section>
 </div>
 <section class="kaart" id="werknemer" hidden><h2>&#128197; Mijn rooster</h2><label for="medewerkerDatum">Kies een week</label><input id="medewerkerDatum" type="date"><h3 id="medewerkerWeek"></h3><div id="medewerkerOpening"></div><p id="medewerkerStatus" role="status"></p><div id="medewerkerDiensten"></div><div class="status"><strong>Totaal geplande uren</strong><p id="medewerkerUren">0 uur</p></div></section>
-<footer>Versie 1.5.0</footer>
+<footer>Versie 1.5.1</footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -208,6 +208,12 @@ async function laadMedewerkersOverzicht(){
   for(const p of profielen){
    const regel=maak('div',undefined,'dienst');
    regel.append(maak('strong',p.naam||'Gebruiker zonder naam'),maak('p','Rol: '+(p.rol||'onbekend'),'subtiel'));
+   if(admin){
+    const verwijder=maak('button','Van deze locatie verwijderen','gevaar klein');
+    verwijder.type='button';
+    verwijder.onclick=()=>verwijderLocatieKoppeling(p,verwijder);
+    regel.append(verwijder);
+   }
    lijst.append(regel);
   }
  }else{melding.textContent='Nog geen gebruikers gekoppeld aan deze locatie.'}
@@ -224,6 +230,42 @@ async function laadMedewerkersOverzicht(){
   el('koppelingOpslaan').disabled=over===0;
   if(!over)el('koppelingMelding').textContent='Alle bestaande accounts zijn al gekoppeld. Nieuwe accounts uitnodigen volgt later.';
  }
+}
+
+// Verwijdert uitsluitend de koppeling, nooit het account of de diensten.
+async function verwijderLocatieKoppeling(profiel,knop){
+ if(gebruikersRol!=='beheerder'||huidigeLocatie===null)return;
+ const locatie_id=huidigeLocatie;
+ const locNaam=locaties.find(l=>l.id===locatie_id)?.naam||'deze locatie';
+ const naam=profiel.naam||'deze gebruiker';
+ const melding=el('medewerkersMelding');
+ knop.disabled=true;
+ try{
+  const {data:{user},error:authFout}=await db.auth.getUser();
+  if(authFout)throw authFout;
+  if(profiel.id===user?.id)throw Error('Je kunt je eigen beheerderskoppeling hier niet verwijderen.');
+  // Blokkeer loskoppelen als de medewerker nog toekomstige diensten heeft.
+  const dezeWeek=maandag(datumTekst(new Date()));
+  const {data:weken,error:wekenFout}=await db.from('roosterweken')
+   .select('id').eq('locatie_id',locatie_id).gte('week_start',dezeWeek);
+  if(wekenFout)throw wekenFout;
+  if(weken?.length){
+   const {data:dienst,error:dienstFout}=await db.from('diensten').select('id')
+    .eq('medewerker_id',profiel.id).in('roosterweek_id',weken.map(w=>w.id))
+    .gte('eindigt_op',new Date().toISOString()).limit(1);
+   if(dienstFout)throw dienstFout;
+   if(dienst?.length)throw Error('Deze medewerker heeft nog een toekomstige dienst op '+locNaam+'. Wijzig die dienst eerst in het rooster.');
+  }
+  if(!confirm(naam+' loskoppelen van '+locNaam+'?\n\nHet account en oude diensten blijven bestaan.'))return;
+  const {data,error}=await db.from('profiel_locaties').delete()
+   .eq('profiel_id',profiel.id).eq('locatie_id',locatie_id).select('profiel_id');
+  if(error)throw error;
+  if(data?.length!==1)throw Error('De locatiekoppeling is niet verwijderd. Controleer de rechten.');
+  await laadLocatieMedewerkers();
+  await laadMedewerkersOverzicht();
+  el('medewerkersMelding').textContent=naam+' is losgekoppeld van '+locNaam+'.';
+ }catch(e){melding.textContent='Loskoppelen mislukt: '+e.message}
+ finally{knop.disabled=false}
 }
 
 el('koppelingForm').onsubmit=async e=>{
