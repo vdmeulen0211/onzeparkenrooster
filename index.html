@@ -49,7 +49,18 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <section class="kaart" id="overzichtPane" hidden>
 <h2>&#128202; Overzicht</h2><div class="rij"><div><label for="overzichtDatum">Kies een datum</label><input id="overzichtDatum" type="date"></div><div><label for="overzichtModus">Weergave</label><select id="overzichtModus"><option value="dag">Dag</option><option value="week" selected>Week</option><option value="maand">Maand</option></select></div></div><div class="weekrij"><h3 id="overzichtTitel"></h3><button id="verversOverzicht" class="secundair klein">Vernieuwen</button></div><p class="subtiel">Planners zien concepten &#233;n gepubliceerde diensten. Sleep of wijzig diensten voorlopig via het menu Rooster.</p><p id="overzichtMelding" class="fout" role="status"></p><div id="overzichtOpening"></div><div id="overzichtInhoud"></div>
 </section>
-<section class="kaart" id="medewerkersPane" hidden><h2>&#128101; Medewerkers per locatie</h2><p class="subtiel">Hieronder staan de bestaande accounts die aan de geselecteerde locatie zijn gekoppeld. Uitnodigen en accountbeheer komen in een volgende uitbreiding.</p><div class="weekrij"><h3 id="medewerkersLocatieTitel"></h3><button id="verversMedewerkers" class="secundair klein">Vernieuwen</button></div><p id="medewerkersMelding" role="status" class="fout"></p><div id="medewerkersLijst"></div></section>
+<section class="kaart" id="medewerkersPane" hidden>
+<h2>&#128101; Medewerkers per locatie</h2>
+<p class="subtiel">Bekijk wie bij de geselecteerde locatie hoort. Alleen beheerders kunnen hieronder een <strong>bestaand account</strong> toevoegen. Nieuwe accounts uitnodigen komt later.</p>
+<div class="weekrij"><h3 id="medewerkersLocatieTitel"></h3><button id="verversMedewerkers" class="secundair klein">Vernieuwen</button></div>
+<p id="medewerkersMelding" role="status" class="fout"></p><div id="medewerkersLijst"></div>
+<div id="koppelingBeheer" class="sectie" hidden>
+<h3>Bestaande medewerker koppelen</h3>
+<p class="subtiel">Selecteer een bestaand account. Een gebruiker kan meerdere locaties hebben, maar WB, ZD en VP blijven aparte roosters.</p>
+<form id="koppelingForm"><label for="koppelingProfiel">Bestaand account</label><select id="koppelingProfiel" required></select><button id="koppelingOpslaan" type="submit">Aan huidige locatie koppelen</button></form>
+<p id="koppelingMelding" class="fout" role="status"></p>
+</div>
+</section>
 <section class="kaart" id="beheerPane" hidden><h2>&#128205; Beheer locaties</h2><p class="subtiel">Alleen voor beheerders. Locaties toevoegen en hernoemen.</p><div id="locatiesLijst"></div><form id="locatieForm"><label for="nieuweLocatie">Nieuwe locatie</label><input id="nieuweLocatie" maxlength="100" placeholder="Naam van locatie" required><button type="submit">Locatie toevoegen</button></form><p class="fout" id="beheerMelding" role="status"></p>
 <div class="sectie"><h3>Openingstijden / servicetijden vastleggen</h3>
 <p class="subtiel">Voor WB en ZD kun je de tijden van de afzonderlijke offici&#235;le openingskalenders gebruiken. Voor VP vul je eigen service- of receptietijden in; die worden nooit automatisch overgenomen van ZD. Alleen beheerders kunnen tijden wijzigen.</p>
@@ -62,7 +73,7 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <p id="openingBeheerMelding" class="subtiel" role="status"></p></div></section>
 </div>
 <section class="kaart" id="werknemer" hidden><h2>&#128197; Mijn rooster</h2><label for="medewerkerDatum">Kies een week</label><input id="medewerkerDatum" type="date"><h3 id="medewerkerWeek"></h3><div id="medewerkerOpening"></div><p id="medewerkerStatus" role="status"></p><div id="medewerkerDiensten"></div><div class="status"><strong>Totaal geplande uren</strong><p id="medewerkerUren">0 uur</p></div></section>
-<footer>Versie 1.4.4</footer>
+<footer>Versie 1.5.0</footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -180,6 +191,9 @@ async function laadLocatieMedewerkers(){
 async function laadMedewerkersOverzicht(){
  const melding=el('medewerkersMelding'),lijst=el('medewerkersLijst');
  lijst.replaceChildren();melding.textContent='';
+ const admin=gebruikersRol==='beheerder';
+ el('koppelingBeheer').hidden=!admin;
+ el('koppelingMelding').textContent='';
  const loc=locaties.find(x=>x.id===huidigeLocatie);
  el('medewerkersLocatieTitel').textContent=loc?loc.naam:'Geen locatie gekozen';
  if(huidigeLocatie===null){melding.textContent='Kies eerst een locatie.';return}
@@ -187,17 +201,51 @@ async function laadMedewerkersOverzicht(){
  const {data:koppelingen,error:le}=await db.from('profiel_locaties').select('profiel_id').eq('locatie_id',huidigeLocatie);
  if(le)throw le;
  const ids=[...new Set((koppelingen||[]).map(x=>x.profiel_id))];
- if(!ids.length){melding.textContent='Er zijn nog geen medewerkers of planners gekoppeld.';return}
- const {data:profielen,error:pe}=await db.from('profielen').select('id,naam,rol').in('id',ids).order('naam');
- if(pe)throw pe;
- if(!profielen.length){melding.textContent='Geen zichtbare profielen gevonden.';return}
- melding.textContent=profielen.length+' gekoppelde gebruikers';
- for(const p of profielen){
+ if(ids.length){
+  const {data:profielen,error:pe}=await db.from('profielen').select('id,naam,rol').in('id',ids).order('naam');
+  if(pe)throw pe;
+  melding.textContent=profielen.length+' gekoppelde gebruikers';
+  for(const p of profielen){
    const regel=maak('div',undefined,'dienst');
    regel.append(maak('strong',p.naam||'Gebruiker zonder naam'),maak('p','Rol: '+(p.rol||'onbekend'),'subtiel'));
    lijst.append(regel);
+  }
+ }else{melding.textContent='Nog geen gebruikers gekoppeld aan deze locatie.'}
+ if(admin){
+  const keuze=el('koppelingProfiel');keuze.replaceChildren();
+  const {data:alle,error:ae}=await db.from('profielen').select('id,naam,rol').order('naam');
+  if(ae){el('koppelingMelding').textContent='Accounts ophalen mislukt: '+ae.message;return}
+  let over=0;
+  for(const p of alle||[]){
+   if(ids.includes(p.id))continue;
+   const opt=maak('option',(p.naam||'Gebruiker zonder naam')+' ('+(p.rol||'onbekend')+')');
+   opt.value=p.id;keuze.append(opt);over++;
+  }
+  el('koppelingOpslaan').disabled=over===0;
+  if(!over)el('koppelingMelding').textContent='Alle bestaande accounts zijn al gekoppeld. Nieuwe accounts uitnodigen volgt later.';
  }
 }
+
+el('koppelingForm').onsubmit=async e=>{
+ e.preventDefault();
+ const knop=el('koppelingOpslaan'),melding=el('koppelingMelding');
+ if(gebruikersRol!=='beheerder'||huidigeLocatie===null)return;
+ const profiel_id=el('koppelingProfiel').value;
+ const locatie_id=huidigeLocatie;
+ if(!profiel_id)return;
+ const locatieNaam=locaties.find(l=>l.id===locatie_id)?.naam||'deze locatie';
+ if(!confirm('Dit bestaande account koppelen aan '+locatieNaam+'?'))return;
+ knop.disabled=true;melding.textContent='Koppeling opslaan...';
+ try{
+  const {data,error}=await db.from('profiel_locaties').insert({profiel_id,locatie_id}).select('profiel_id');
+  if(error)throw error;
+  if(!data?.length)throw Error('Geen bevestiging van de database ontvangen.');
+  await laadLocatieMedewerkers();
+  await laadMedewerkersOverzicht();
+  el('koppelingMelding').textContent='Account gekoppeld aan '+locatieNaam+'.';
+ }catch(err){melding.textContent='Koppelen mislukt: '+err.message}
+ finally{knop.disabled=false}
+};
 function toonLocatieBeheer(){
  const lijst=el('locatiesLijst');lijst.replaceChildren();
  for(const loc of locaties){
