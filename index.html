@@ -47,7 +47,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 .riv-hr-page{margin:14px 0;padding:20px;background:white;border-radius:15px;min-width:0;overflow-wrap:anywhere}.riv-hr-page[hidden]{display:none!important}.riv-hr-workspace>.container>section:not(#dashboard):not(.riv-hr-page),.riv-hr-workspace>.container>#planner,.riv-hr-workspace>.container>#nav25{display:none!important}.riv-person-list{display:grid;gap:7px;margin:12px 0}.riv-person-list button{text-align:left;background:#e7eff1!important;color:#123543!important}.riv-person-list button[aria-current=page]{background:#167d72!important;color:white!important}.riv-person-tabs{border-top:1px solid #dce5e8;padding-top:12px}.riv-hr-page .riv-hr-nav{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}.riv-hr-page select.riv-hidden-picker{display:none!important}.riv-hr-page .riv-person-head{margin:15px 0}.riv-hr-page .riv-person-head h3{margin:0 0 8px} @media(max-width:550px){.riv-hr-page{padding:12px}.riv-hr-page .riv-hr-nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .riv-clock-pending{background:#fff0f0;color:#a12626;border-left:4px solid #b32b2b;padding:10px;border-radius:6px;font-weight:700}.riv-clock-review{border:1px solid #b32b2b;border-radius:8px;padding:10px}.riv-clock-msg{overflow-wrap:anywhere}
 
-/* 3.2-alpha.7 – rustig en leesbaar rooster */
+/* 3.2-alpha.8 – rustig en leesbaar rooster */
 .week-grid{border:1px solid #dce5e8;border-radius:10px;background:#fff;max-width:100%}
 .week-tabel{font-size:14px;border-collapse:separate;border-spacing:0;min-width:760px}
 .week-tabel th,.week-tabel td{border:0;border-right:1px solid #e2e8eb;border-bottom:1px solid #e2e8eb;padding:10px;line-height:1.4}
@@ -147,7 +147,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '3.2-alpha.7';
+const RIVAME_VERSION = '3.2-alpha.8';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -735,26 +735,46 @@ async function week24Save(ctx,begin,end,pauze,move=null){
  const values={medewerker_id:ctx.id,begint_op:start.toISOString(),eindigt_op:stop.toISOString(),pauze_minuten:pauze};
  await controleerConcept();if(ctx.key!==week24Key())throw Error('Het rooster is veranderd.');
  let r;if(move){r=await db.from('diensten').update(values).eq('id',move.id).eq('roosterweek_id',ctx.week).eq('medewerker_id',move.medewerker_id).eq('begint_op',move.begint_op).eq('eindigt_op',move.eindigt_op).eq('pauze_minuten',move.pauze_minuten).select('id');}
- else{values.kleur=el('weekEigen25').checked?el('weekKleur25').value:null;if(ctx.source){values.attractie_id=ctx.source.attractie_id??null;values.opmerkingen=ctx.source.opmerkingen??null;}r=await db.from('diensten').insert({...values,roosterweek_id:ctx.week}).select('id');}
+ else{values.kleur=ctx.dragCopy?(ctx.source.kleur??null):(el('weekEigen25').checked?el('weekKleur25').value:null);if(ctx.source){values.attractie_id=ctx.source.attractie_id??null;values.opmerkingen=ctx.source.opmerkingen??null;}r=await db.from('diensten').insert({...values,roosterweek_id:ctx.week}).select('id');}
  if(r.error)throw r.error;if(r.data?.length!==1)throw Error('Dienst niet opgeslagen. Mogelijk is deze intussen gewijzigd.');
 }
 el('week24Close').onclick=()=>week24Dialog.close();
 el('week24Form').onsubmit=async e=>{e.preventDefault();if(week24Busy)return;week24Busy=true;el('week24Save').disabled=true;el('week24Error').textContent='';try{await week24Save(week24Context,el('week24Begin').value,el('week24End').value,Number(el('week24Break').value));week24Dialog.close();week24Copy=null;await rivVerversDiensten();bericht('Dienst opgeslagen.')}catch(e){el('week24Error').textContent=e.message||String(e);if(!week24Dialog.open)bericht(e.message||String(e))}finally{week24Busy=false;el('week24Save').disabled=false}};
+// Keuze bij het neerzetten van een dienst.
+function rivSleepKeuze(d,id,day){
+ return new Promise(resolve=>{
+  const dialog=maak('dialog');dialog.style.cssText='width:min(440px,94vw);border:0;border-radius:16px;padding:22px;color:#123543;box-shadow:0 12px 48px #0004';
+  dialog.setAttribute('aria-label','Dienst kopiëren of verplaatsen');
+  dialog.append(maak('h2','Wat wil je met deze dienst doen?'),maak('p',lokaleTijd(d.begint_op)+' – '+lokaleTijd(d.eindigt_op)+' → '+(namen[id]||'Medewerker')+' · '+nlDate(day)));
+  let choice=null;const buttons=maak('div');buttons.style.cssText='display:grid;gap:10px';
+  for(const [value,label,cls] of [['copy','Kopiëren – origineel behouden',''],['move','Verplaatsen – origineel verzetten','secundair'],[null,'Annuleren','secundair']]){
+   const b=week24Button(label,()=>{choice=value;dialog.close()},cls);buttons.append(b);
+  }
+  dialog.append(buttons);dialog.addEventListener('close',()=>{dialog.remove();resolve(choice)},{once:true});document.body.append(dialog);dialog.showModal();
+ });
+}
+async function rivSleepOverlap(ctx,d,move){
+ const start=nlInstant(ctx.day,lokaleTijd(d.begint_op)),end=nlInstant(ctx.day,lokaleTijd(d.eindigt_op));
+ if(end<=start)throw Error('Controleer de werktijden.');
+ let q=db.from('diensten').select('id').eq('medewerker_id',ctx.id).lt('begint_op',end.toISOString()).gt('eindigt_op',start.toISOString());
+ if(move)q=q.neq('id',d.id);
+ const r=await q.limit(1);if(r.error)throw r.error;if(r.data.length)throw Error('Deze medewerker heeft al een overlappende dienst.');
+}
 function week24Render(){
  week24Host.replaceChildren();if(!weekId||!['concept','gepubliceerd'].includes(weekStatus))return;
  const key=week24Key(),start=maandag(el('datum').value);if(week24Copy?.key!==key)week24Copy=null;
  const ids=Array.from(el('medewerker').options).map(o=>o.value);const all=[...new Set([...ids,...huidigeDiensten.map(d=>String(d.medewerker_id))])];
- const info=maak('p',week24Copy?'Kies een plusje om de geselecteerde dienst te kopiëren.':'Klik op + voor een sjabloon of handmatige dienst. Klik op een dienst om te wijzigen. Sleep een dienst naar een andere dag of medewerker.','subtiel');week24Host.append(info,maak('p','Weekuren zijn netto geplande uren (inclusief conceptroosters). Het geplande verschil met het contract is indicatief, niet het officiële HR-saldo.','subtiel'));
+ const info=maak('p',week24Copy?'Kies een plusje om de geselecteerde dienst te kopiëren.':'Klik op + voor een sjabloon of handmatige dienst. Klik op een dienst om te wijzigen. Sleep een dienst naar een andere dag of medewerker en kies Kopiëren of Verplaatsen.','subtiel');week24Host.append(info,maak('p','Weekuren zijn netto geplande uren (inclusief conceptroosters). Het geplande verschil met het contract is indicatief, niet het officiële HR-saldo.','subtiel'));
  if(week24Copy)week24Host.append(week24Button('Kopiëren annuleren',()=>{week24Copy=null;week24Render()}));
  const sc=maak('div',undefined,'week-grid'),t=maak('table',undefined,'week-tabel opr24table'),head=maak('tr');head.append(maak('th','Medewerker'));
  for(let j=0;j<7;j++){const day=verschuif(start,j),th=maak('th',new Date(day+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'numeric'}));th.append(maak('span',dagLabel(huidigeLocatie,day),'openingsregel'));head.append(th)}t.append(head);
  for(const id of all){const row=maak('tr'),name=maak('td',undefined,'riv-week-person');name.append(maak('strong',namen[id]||'Niet meer gekoppeld'));const localMinutes=huidigeDiensten.filter(d=>String(d.medewerker_id)===id).reduce((n,d)=>n+minutenNetto(d),0);name.append(maak('span','Locatie: '+urenTekst(localMinutes),'riv-week-stat'));const stat=maak('div','Contracturen laden…','riv-week-stat');stat.dataset.rivWeekPerson=id;row.dataset.rivGroupPerson=id;name.append(stat);row.append(name);for(let j=0;j<7;j++){const day=verschuif(start,j),cell=maak('td');
  for(const d of huidigeDiensten.filter(d=>String(d.medewerker_id)===id&&lokaleDatum(d.begint_op)===day)){
- const box=maak('div',undefined,'opr24shift'),b=week24Button(lokaleTijd(d.begint_op)+'–'+lokaleTijd(d.eindigt_op),()=>wijzigDienst(d.id),'secundair klein opr24time');b.draggable=true;b.ondragstart=e=>{week24Drag={key,d};e.dataTransfer.setData('text/plain',String(d.id));e.dataTransfer.effectAllowed='move'};b.ondragend=()=>{week24Drag=null};
+ const box=maak('div',undefined,'opr24shift'),b=week24Button(lokaleTijd(d.begint_op)+'–'+lokaleTijd(d.eindigt_op),()=>wijzigDienst(d.id),'secundair klein opr24time');b.draggable=true;b.ondragstart=e=>{week24Drag={key,d};e.dataTransfer.setData('text/plain',String(d.id));e.dataTransfer.effectAllowed='copyMove'};b.ondragend=()=>{week24Drag=null};
  const actions=maak('div',undefined,'opr24actions');actions.append(week24Button('Kopie',()=>{week24Copy={key,d};week24Render()}),week24Button('Log',()=>toonDienstLog21(d.id)));if(d.kleur){box.style.background=d.kleur;box.style.borderLeft='4px solid var(--park)';b.style.color='#17241e'}box.append(b,actions);cell.append(box);
  }
  if(ids.includes(id)){const plus=week24Button('+',()=>week24Open(id,day,week24Copy?.d||null),'secundair opr24plus');plus.setAttribute('aria-label','Dienst toevoegen voor '+(namen[id]||'medewerker')+' op '+nlDate(day));cell.append(plus);
- cell.ondragover=e=>{if(week24Drag?.key===key&&!week24Busy){e.preventDefault();e.dataTransfer.dropEffect='move';cell.classList.add('opr24target')}};cell.ondragleave=()=>cell.classList.remove('opr24target');cell.ondrop=async e=>{e.preventDefault();cell.classList.remove('opr24target');const drag=week24Drag;week24Drag=null;if(!drag||drag.key!==key||week24Busy)return;const d=drag.d;if(String(d.medewerker_id)===id&&lokaleDatum(d.begint_op)===day)return;if(lokaleDatum(d.begint_op)!==lokaleDatum(d.eindigt_op)){bericht('Een nachtdienst kan nog niet worden versleept.');return}if(!confirm('Dienst verplaatsen naar '+(namen[id]||'medewerker')+' op '+nlDate(day)+'?'))return;week24Busy=true;try{await week24Save({key,week:weekId,id,day},lokaleTijd(d.begint_op),lokaleTijd(d.eindigt_op),d.pauze_minuten,d);await rivVerversDiensten();bericht('Dienst verplaatst.')}catch(e){bericht(e.message||String(e))}finally{week24Busy=false}};
+ cell.ondragover=e=>{if(week24Drag?.key===key&&!week24Busy){e.preventDefault();e.dataTransfer.dropEffect='move';cell.classList.add('opr24target')}};cell.ondragleave=()=>cell.classList.remove('opr24target');cell.ondrop=async e=>{e.preventDefault();cell.classList.remove('opr24target');const drag=week24Drag;week24Drag=null;if(!drag||drag.key!==key||week24Busy)return;const d=drag.d;if(String(d.medewerker_id)===id&&lokaleDatum(d.begint_op)===day)return;if(lokaleDatum(d.begint_op)!==lokaleDatum(d.eindigt_op)){bericht('Een nachtdienst kan nog niet worden versleept.');return}week24Busy=true;const ctx={key,week:weekId,id,day};try{const choice=await rivSleepKeuze(d,id,day);if(!choice)return;if(key!==week24Key())throw Error('Het rooster is veranderd. Sleep de dienst opnieuw.');const move=choice==='move';await rivSleepOverlap(ctx,d,move);if(!move){ctx.source=d;ctx.dragCopy=true;}await week24Save(ctx,lokaleTijd(d.begint_op),lokaleTijd(d.eindigt_op),d.pauze_minuten,move?d:null);week24Copy=null;await rivVerversDiensten();bericht(move?'Dienst verplaatst.':'Dienst gekopieerd.')}catch(e){bericht(e.message||String(e))}finally{week24Busy=false}};
  }row.append(cell)}t.append(row)}sc.append(t);week24Host.append(sc);
  if(!all.length)week24Host.append(maak('p','Koppel eerst medewerkers aan deze locatie.','subtiel'));
 }
@@ -1001,7 +1021,7 @@ function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined
  dlg.addEventListener('close',()=>{gen++;dlg.replaceChildren()});const old=toonDashboard;toonDashboard=async function(){reset();await old();await refresh()};db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN')reset();if(['INITIAL_SESSION','SIGNED_IN','TOKEN_REFRESHED'].includes(event))setTimeout(()=>{if(!el('dashboard').hidden)refresh()},0)});if(!el('dashboard').hidden)refresh();
 })();
 
-// Rivame 3.2-alpha.7 – clock registration
+// Rivame 3.2-alpha.8 – clock registration
 (()=>{
  const get=r=>{if(r.error)throw r.error;return r.data};
  const host=maak('section',undefined,'kaart');host.hidden=true;el('dashboard').after(host);
@@ -1073,7 +1093,7 @@ function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined
  create.onclick=()=>run(async()=>{if(!el('maakWeek').hidden&&!weekId)await el('maakWeek').onclick()});refresh();
 })();
 
-// 3.2-alpha.7: location-scoped roster groups and targeted shift refresh.
+// 3.2-alpha.8: location-scoped roster groups and targeted shift refresh.
 let rivGroups=[],rivGroupMembers=new Map(),rivGroupLoc=null,rivGroupSeq=0,rivGroupFilter=new Set(),rivGroupCollapsed=new Set();
 const rivGroupTools=el('rivGroupTools');
 const rivGroupDialog=maak('dialog');rivGroupDialog.className='nl-dialog';rivGroupDialog.style.cssText='width:min(760px,94vw);max-height:85vh;overflow:auto';document.body.append(rivGroupDialog);
