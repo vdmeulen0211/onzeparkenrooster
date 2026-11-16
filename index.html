@@ -39,7 +39,8 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 :root{--rivame-navy:#123543;--rivame-teal:#168D80;--park:#168D80;--park-soft:#e3f5f2;--park-ink:#123543;background:#F3F6F8;color:#123543}
 .rivame-wordmark{font-size:clamp(34px,7vw,54px);font-weight:800;letter-spacing:.10em;color:#123543;line-height:1.1}.rivame-wordmark span{color:#20B8A2}.rivame-slogan{font-size:14px;color:#526873;margin:5px 0 18px}header h1{font-size:23px}
 .opr25employee .opr25hero{background:#123543;color:white;border-left-color:#20B8A2}.opr25employee .opr25hero .subtiel{color:#d1e5e8}.opr25employee .opr25tiles button:not(.secundair):not(.gevaar){background:white;color:#123543;border:1px solid #cbd9df;border-left:5px solid #168D80}.opr25employee .opr25tiles button[data-page25="besch"]{border-left-color:#2864a0!important}.opr25employee .opr25tiles button[data-page25="open"]{border-left-color:#b56a13!important}.opr25employee .opr25tiles button[data-page25="vrij"]{border-left-color:#7953a0!important}.opr25employee .opr25tiles button[data-page25="berichten"]{border-left-color:#b43c59!important}.opr25employee .opr25nav button:not(.secundair):not(.gevaar){background:#e7f0f2;color:#123543}.opr25employee .opr25nav button[aria-current="page"]{background:#123543!important;color:white!important}button:focus-visible{outline:3px solid #20B8A2;outline-offset:2px}
-.riv-ag-item{background:#e1f5f1;color:#123543;border-left:3px solid #168d80;border-radius:5px;padding:6px;margin:5px 0;overflow-wrap:anywhere;font-size:12px;white-space:normal}.riv-ag-item strong,.riv-ag-item small{display:block}.riv-ag-item small{white-space:pre-wrap}#riv-ag-omschrijving{width:100%;min-height:80px;font:inherit}</style>
+.riv-ag-item{background:#e1f5f1;color:#123543;border-left:3px solid #168d80;border-radius:5px;padding:6px;margin:5px 0;overflow-wrap:anywhere;font-size:12px;white-space:normal}.riv-ag-item strong,.riv-ag-item small{display:block}.riv-ag-item small{white-space:pre-wrap}#riv-ag-omschrijving{width:100%;min-height:80px;font:inherit}.riv-team-line{display:flex;justify-content:space-between;gap:12px;padding:9px 10px;margin:5px 0;background:#edf5f5;border-radius:7px;color:#123543}
+</style>
 </head>
 <body>
 <div class="container">
@@ -83,7 +84,7 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <p id="openingBeheerMelding" class="subtiel" role="status"></p></div></section>
 </div>
 <section class="kaart" id="mijnPlanning" hidden><h2>Mijn planning</h2><div class="menu"><button id="mpTabBesch" type="button">Beschikbaarheid</button><button id="mpTabVrij" type="button" class="secundair">Afwezigheid</button></div><label for="mpLoc">Locatie</label><select id="mpLoc"></select><label for="mpWeek">Week (kies een datum)</label><input type="text" data-nl-source="date" id="mpWeek"><p id="mpDead" class="status"></p><div id="mpDays"></div><div id="mpAfw" hidden><h3>Afwezigheid aanvragen</h3><form id="mpAfwForm"><label for="afwSoort">Soort afwezigheid</label><select id="afwSoort"><option value="vrij">Vrij vragen</option><option value="vakantie">Vakantie</option><option value="bijzonder">Bijzonder verlof</option><option value="overig">Overig (niet voor ziekmeldingen)</option></select><label for="afwVan">Vanaf</label><input type="text" data-nl-source="date" id="afwVan" required><label for="afwTot">Tot en met</label><input type="text" data-nl-source="date" id="afwTot" required><button type="submit">Aanvraag indienen</button></form><h3>Mijn aanvragen in deze week</h3><div id="mpAfwLijst"></div></div><p id="mpMsg" role="status"></p><p class="subtiel">Gewone vrije dagen volgen de deadline. Vakantie en bijzonder verlof worden apart beoordeeld; wettelijke verlofsaldi zijn nog niet ingebouwd. Ziekmeldingen en uitzonderingen regel je rechtstreeks met je roostermaker.</p></section><section class="kaart" id="werknemer" hidden><h2>&#128197; Mijn rooster</h2><label for="medewerkerDatum">Kies een week</label><input id="medewerkerDatum" type="text" data-nl-source="date"><h3 id="medewerkerWeek"></h3><div id="medewerkerOpening"></div><p id="medewerkerStatus" role="status"></p><div id="medewerkerDiensten"></div><div class="status"><strong>Totaal geplande uren</strong><p id="medewerkerUren">0 uur</p></div></section>
-<section id="home25" class="kaart opr25home" hidden><div id="groet25"></div><div class="opr25hero" id="next25" role="status">Volgende dienst laden…</div><div class="opr25tiles"><button type="button" data-page25="rooster">Mijn rooster</button><button type="button" data-page25="besch">Beschikbaarheid</button><button type="button" data-page25="open">Open diensten & overnemen</button><button type="button" data-page25="vrij">Afwezigheid</button><button type="button" data-page25="berichten" id="nieuws25">Berichten</button></div></section><nav id="nav25" class="opr25nav" aria-label="Medewerkersmenu" hidden><button type="button" data-page25="home">Home</button><button type="button" data-page25="rooster">Rooster</button><button type="button" data-page25="berichten">Berichten</button><button type="button" data-page25="profiel">Profiel</button></nav><section class="kaart" id="profiel25" hidden><h2>Mijn profiel</h2><p id="profielNaam25"></p><button type="button" id="uit25" class="secundair">Uitloggen</button></section><footer>Versie 2.6.0-alpha.3</footer>
+<section id="home25" class="kaart opr25home" hidden><div id="groet25"></div><div class="opr25hero" id="next25" role="status">Volgende dienst laden…</div><div class="opr25tiles"><button type="button" data-page25="rooster">Mijn rooster</button><button type="button" data-page25="besch">Beschikbaarheid</button><button type="button" data-page25="open">Open diensten & overnemen</button><button type="button" data-page25="vrij">Afwezigheid</button><button type="button" data-page25="berichten" id="nieuws25">Berichten</button></div></section><nav id="nav25" class="opr25nav" aria-label="Medewerkersmenu" hidden><button type="button" data-page25="home">Home</button><button type="button" data-page25="rooster">Rooster</button><button type="button" data-page25="berichten">Berichten</button><button type="button" data-page25="profiel">Profiel</button></nav><section class="kaart" id="profiel25" hidden><h2>Mijn profiel</h2><p id="profielNaam25"></p><button type="button" id="uit25" class="secundair">Uitloggen</button></section><footer>Versie 2.6.0-alpha.4</footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -621,7 +622,7 @@ el('openLogBewerk21').onclick=()=>{if(bewerkId!==null)toonDienstLog21(bewerkId)}
   }
  }
  for(const id of ['datum','medewerkerDatum']){const input=el(id), rij=maak('div',undefined,'rij');for(const [label,n] of [['Vorige week',-7],['Deze week',0],['Volgende week',7]])rij.append(button(label,()=>{input.value=n?verschuif(maandag(input.value||nlToday()),n):nlToday();input.dispatchEvent(new Event('change',{bubbles:true}))}));input.insertAdjacentElement('beforebegin',rij)}
- const footer=document.querySelector('footer');if(footer)footer.textContent='Versie 2.6.0-alpha.3';
+ const footer=document.querySelector('footer');if(footer)footer.textContent='Versie 2.6.0-alpha.4';
 })();
 
 (()=>{
@@ -709,7 +710,7 @@ const dashOud25=toonDashboard;toonDashboard=async function(){++homeGen25;el('hom
 // Initial session may have begun before later wrappers were registered.
 const init25=setInterval(()=>{if(!el('dashboard').hidden&&gebruikersRol==='medewerker'){clearInterval(init25);if(!document.body.classList.contains('opr25employee'))toonDashboard().catch(e=>{el('loginMelding').textContent=e.message})}else if(!el('dashboard').hidden&&gebruikersRol){clearInterval(init25)}},250);setTimeout(()=>clearInterval(init25),15000);
 
-// Rivame Agenda 2.6.0-alpha.3
+// Rivame Agenda 2.6.0-alpha.4
 let agendaGen=0, agendaCache=null;
 function agendaItem(a){const d=maak('div',undefined,'riv-ag-item');d.append(maak('strong',(a.begint?a.begint.slice(0,5)+(a.eindigt?'–'+a.eindigt.slice(0,5):'')+' · ':'')+a.titel),maak('small',a.soort));if(a.omschrijving)d.append(maak('small',a.omschrijving));if(a.id!=null)d.append(agendaButton('Bijlagen',()=>rivBijlagen(a)));return d}
 function agendaHeaders(){if(!agendaCache||agendaCache.key!==week24Key())return;const cells=week24Host.querySelectorAll('tr:first-child th');for(let i=1;i<cells.length;i++){cells[i].querySelectorAll('.riv-ag-item').forEach(x=>x.remove());for(const a of agendaCache.rows.filter(a=>a.datum===verschuif(agendaCache.start,i-1)))cells[i].append(agendaItem(a))}}
@@ -735,6 +736,41 @@ function rivBijlagen(a){if(rivBusy)return;const gen=++rivGen;const role=gebruike
  if(!rivDialog.open)rivDialog.showModal();laden().catch(e=>{if(geldig())msg.textContent=e.message||String(e)});
 }
 rivDialog.addEventListener('cancel',e=>{if(rivBusy)e.preventDefault()});rivDialog.addEventListener('close',()=>{rivGen++;rivDialog.replaceChildren()});db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){rivGen++;if(rivDialog.open)rivDialog.close()}});
+
+// Rivame Teamrooster – instellingen en uitsluitend gepubliceerde diensten via RPC.
+const teamAdmin=maak('div',undefined,'sectie');agendaHost.after(teamAdmin);
+const teamEmp=maak('div',undefined,'sectie');teamEmp.hidden=true;el('werknemer').append(teamEmp);
+let teamAdminGen=0,teamEmpGen=0,teamRowsGen=0,teamLocKeuze='';
+async function laadTeamInstellingen(){
+ const gen=++teamAdminGen,loc=huidigeLocatie;teamAdmin.replaceChildren();teamAdmin.hidden=true;
+ const valid=()=>gen===teamAdminGen&&gebruikersRol==='beheerder'&&String(loc)===String(huidigeLocatie);
+ if(loc==null||!valid())return;
+ teamAdmin.hidden=false;teamAdmin.append(maak('h3','Teamrooster – instellingen'));
+ const msg=maak('p','Instellingen laden…','subtiel');teamAdmin.append(msg);
+ try{const r=await db.from('rivame_teamrooster_instellingen').select('actief,toon_diensttijden').eq('locatie_id',loc).maybeSingle();if(r.error)throw r.error;if(!valid())return;
+ const active=maak('input'),times=maak('input');active.type=times.type='checkbox';active.style.cssText=times.style.cssText='width:auto;min-height:0;margin-right:8px';active.checked=r.data?.actief===true;times.checked=r.data?.toon_diensttijden===true;
+ const l1=maak('label'),l2=maak('label');l1.append(active,document.createTextNode('Teamrooster beschikbaar voor medewerkers'));l2.append(times,document.createTextNode('Diensttijden tonen'));times.disabled=!active.checked;active.onchange=()=>{times.disabled=!active.checked};
+ const save=agendaButton('Instellingen opslaan',async()=>{if(!valid())return;save.disabled=active.disabled=times.disabled=true;try{const out=await db.from('rivame_teamrooster_instellingen').upsert({locatie_id:loc,actief:active.checked,toon_diensttijden:active.checked&&times.checked},{onConflict:'locatie_id'}).select('actief,toon_diensttijden').single();if(out.error)throw out.error;if(valid())msg.textContent='Instellingen opgeslagen.'}catch(e){if(valid())msg.textContent=e.message}finally{if(valid()){save.disabled=active.disabled=false;times.disabled=!active.checked}}});
+ msg.textContent='Geldt alleen voor de gekozen locatie. Alleen gepubliceerde diensten worden getoond.';teamAdmin.append(l1,l2,save);
+ }catch(e){if(valid())msg.textContent='Teamrooster: '+e.message}
+}
+async function laadTeamMedewerker(){
+ const gen=++teamEmpGen;++teamRowsGen;teamEmp.hidden=true;teamEmp.replaceChildren();const start=maandag(el('medewerkerDatum').value);
+ const valid=()=>gen===teamEmpGen&&gebruikersRol==='medewerker'&&start===maandag(el('medewerkerDatum').value);
+ if(!valid()||!locaties.length)return;
+ try{const r=await db.from('rivame_teamrooster_instellingen').select('locatie_id,actief,toon_diensttijden').in('locatie_id',locaties.map(l=>l.id)).eq('actief',true);if(r.error)throw r.error;if(!valid())return;
+ const active=locaties.filter(l=>r.data.some(s=>String(s.locatie_id)===String(l.id)));if(!active.length)return;
+ const label=maak('label','Locatie'),select=maak('select'),out=maak('div');select.id='teamLoc26';label.htmlFor=select.id;
+ for(const l of active){const o=maak('option',l.naam);o.value=String(l.id);select.append(o)}if(active.some(l=>String(l.id)===teamLocKeuze))select.value=teamLocKeuze;
+ teamEmp.append(maak('h3','Teamrooster'),maak('p','Gepubliceerde diensten van deze locatie.','subtiel'),label,select,out);teamEmp.hidden=false;
+ async function render(){const rowGen=++teamRowsGen,loc=select.value;teamLocKeuze=loc;const current=()=>valid()&&rowGen===teamRowsGen&&select.value===loc;out.textContent='Teamrooster laden…';try{const result=await db.rpc('rivame_teamrooster',{p_locatie_id:Number(loc),p_week_start:start});if(result.error)throw result.error;if(!current())return;out.replaceChildren();if(!result.data.length){out.append(maak('p','Geen gepubliceerde teamdiensten beschikbaar.','subtiel'));return}for(let i=0;i<7;i++){const day=verschuif(start,i),section=maak('div',undefined,'dienst');section.append(maak('strong',new Date(day+'T12:00:00Z').toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Amsterdam'})));const rows=result.data.filter(x=>x.dienst_datum===day);if(!rows.length)section.append(maak('p','Geen diensten','subtiel'));for(const d of rows){const line=maak('div',undefined,'riv-team-line');line.append(maak('span',d.medewerker_naam||'Medewerker'));if(d.begint_op&&d.eindigt_op)line.append(maak('strong',lokaleTijd(d.begint_op)+' – '+lokaleTijd(d.eindigt_op)));section.append(line)}out.append(section)}}catch(e){if(current())out.textContent='Teamrooster niet beschikbaar: '+e.message}}
+ select.onchange=render;await render();
+ }catch(e){if(valid()){teamEmp.hidden=false;teamEmp.textContent='Teamrooster niet beschikbaar: '+e.message}}
+}
+const teamOldWeek=laadWeek;laadWeek=async function(){++teamAdminGen;teamAdmin.replaceChildren();teamAdmin.hidden=true;await teamOldWeek();await laadTeamInstellingen()};
+const teamOldEmp=laadMedewerkerRooster;laadMedewerkerRooster=async function(){++teamEmpGen;++teamRowsGen;teamEmp.hidden=true;teamEmp.replaceChildren();await teamOldEmp();await laadTeamMedewerker()};
+const teamOldPage=page25;page25=function(page){teamOldPage(page);if(page==='rooster'&&gebruikersRol==='medewerker')laadTeamMedewerker()};
+db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){++teamAdminGen;++teamEmpGen;++teamRowsGen;teamLocKeuze='';for(const node of [teamAdmin,teamEmp]){node.hidden=true;node.replaceChildren()}}});
 
 </script>
 </body>
