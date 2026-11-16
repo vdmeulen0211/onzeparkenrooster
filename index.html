@@ -47,7 +47,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 .riv-hr-page{margin:14px 0;padding:20px;background:white;border-radius:15px;min-width:0;overflow-wrap:anywhere}.riv-hr-page[hidden]{display:none!important}.riv-hr-workspace>.container>section:not(#dashboard):not(.riv-hr-page),.riv-hr-workspace>.container>#planner,.riv-hr-workspace>.container>#nav25{display:none!important}.riv-person-list{display:grid;gap:7px;margin:12px 0}.riv-person-list button{text-align:left;background:#e7eff1!important;color:#123543!important}.riv-person-list button[aria-current=page]{background:#167d72!important;color:white!important}.riv-person-tabs{border-top:1px solid #dce5e8;padding-top:12px}.riv-hr-page .riv-hr-nav{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}.riv-hr-page select.riv-hidden-picker{display:none!important}.riv-hr-page .riv-person-head{margin:15px 0}.riv-hr-page .riv-person-head h3{margin:0 0 8px} @media(max-width:550px){.riv-hr-page{padding:12px}.riv-hr-page .riv-hr-nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .riv-clock-pending{background:#fff0f0;color:#a12626;border-left:4px solid #b32b2b;padding:10px;border-radius:6px;font-weight:700}.riv-clock-review{border:1px solid #b32b2b;border-radius:8px;padding:10px}.riv-clock-msg{overflow-wrap:anywhere}
 
-/* 3.2-alpha.3 – rustig en leesbaar rooster */
+/* 3.2-alpha.4 – rustig en leesbaar rooster */
 .week-grid{border:1px solid #dce5e8;border-radius:10px;background:#fff;max-width:100%}
 .week-tabel{font-size:14px;border-collapse:separate;border-spacing:0;min-width:760px}
 .week-tabel th,.week-tabel td{border:0;border-right:1px solid #e2e8eb;border-bottom:1px solid #e2e8eb;padding:10px;line-height:1.4}
@@ -69,6 +69,24 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 .tijdlijn-kop .tijdlijn-naam,.uren-kop{background:#123543;color:#fff}.riv-team-line{background:#f4f7f8;border:1px solid #dce5e8}
 .riv-report-chart{border:1px solid #dce5e8;border-radius:10px;padding:14px;margin:14px 0}.riv-report-chart h3{margin:0 0 12px}.riv-report-bar{height:13px;border-radius:4px;min-width:0}.riv-report-track{background:#edf2f4;border-radius:4px;flex:1;overflow:hidden}.riv-report-line{display:flex;align-items:center;gap:8px;margin:5px 0}.riv-report-line small{min-width:80px;text-align:right}
 
+
+/* Compacte weekplanning: zeven dagen op desktop, scroll alleen op kleine schermen. */
+.container:has(#roosterPane:not([hidden])){max-width:1600px}
+#week24 .opr24table{width:100%;min-width:0;table-layout:fixed}
+#week24 .opr24table th:first-child,#week24 .opr24table td:first-child{width:14%;min-width:0;overflow-wrap:anywhere}
+#week24 .opr24table th,#week24 .opr24table td{padding:6px;overflow-wrap:anywhere}
+#week24 .opr24shift{padding:4px;min-width:0}
+#week24 .opr24time{white-space:normal;overflow-wrap:normal;font-size:13px;padding:3px 0;min-width:0}
+#week24 .opr24actions{flex-wrap:wrap;gap:3px}
+#week24 .opr24actions button{min-width:0;padding:3px;font-size:11px}
+#week24 .riv-ag-item{padding:5px;overflow-wrap:anywhere}
+#week24 .riv-ag-item .riv-ag-time{font-size:12px}
+#week24 .riv-ag-attach{max-width:100%;white-space:normal}
+.riv-week-nav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin:12px 0}
+.riv-week-nav strong{text-align:center;font-size:14px}
+.riv-week-nav button{margin:0;min-height:38px;padding:8px 12px}
+#rivWeekToday{display:block;margin:0 auto 10px}
+@media(max-width:760px){#week24 .opr24table{min-width:780px} .riv-week-nav{gap:5px}.riv-week-nav button{padding:6px;font-size:12px}.riv-week-nav strong{font-size:12px}}
 </style>
 <style>.riv-clock-history{margin-top:12px;padding:12px;border:1px solid #d7e3e6;border-radius:10px;background:#f7fafb}.riv-clock-history[hidden]{display:none}.riv-clock-history-item{border-top:1px solid #d7e3e6;padding:12px 0;overflow-wrap:anywhere}.riv-clock-history-item p{margin:5px 0}.riv-clock-history-values{display:grid;gap:6px;margin-top:8px}.riv-clock-history-values>div{display:grid;grid-template-columns:minmax(100px,1fr) 2fr;gap:8px;font-size:14px}.riv-clock-history h4{margin:0 0 10px}</style>
 </head>
@@ -85,7 +103,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 <section class="kaart" id="roosterPane">
 <h2>&#128197; Weekrooster</h2><div id="weekOpening" class="sectie"></div><label for="datum">Kies een datum in de week</label><input id="datum" type="text" data-nl-source="date"><h3 id="weekTitel"></h3><div id="roosterAfw" class="status" hidden></div><p class="status" id="status"></p><button id="maakWeek" hidden>Conceptweek aanmaken</button>
 <div id="formulier" hidden><h3 id="formulierTitel">Nieuwe dienst toevoegen</h3><div class="status"><label for="sjabloon20">Dienstsjabloon</label><select id="sjabloon20"><option value="">Kies een sjabloon</option></select><div class="rij"><button type="button" class="secundair klein" id="sjabloonBewaar20">Huidige tijden bewaren als sjabloon</button><button type="button" class="secundair klein" id="sjabloonWis20">Gekozen sjabloon verwijderen</button></div><label for="kleur25">Sjabloonkleur</label><input type="color" id="kleur25" value="#b9dfc6"><button type="button" id="kleurBewaar25" class="secundair klein">Kleur van gekozen sjabloon opslaan</button><p id="sjabloonMsg20" role="status"></p></div><form id="dienstForm"><label for="medewerker">Medewerker</label><select id="medewerker" required></select><label for="werkdag">Datum</label><input id="werkdag" type="text" data-nl-source="date" required><div class="kolommen"><div><label for="begin">Begintijd</label><input id="begin" type="text" data-nl-source="time" value="09:00" required></div><div><label for="eind">Eindtijd</label><input id="eind" type="text" data-nl-source="time" value="17:00" required></div></div><label for="pauze">Pauze (minuten)</label><input id="pauze" type="number" min="0" value="30" required><button id="opslaan" type="submit">Dienst toevoegen</button><button id="openLogBewerk21" type="button" class="secundair" hidden>Logboek van deze dienst</button><button id="annuleren" type="button" class="secundair" hidden>Wijziging annuleren</button></form></div>
-<div class="sectie"><h3>Ingeplande diensten</h3><div id="week24"></div><details><summary>Alle diensten als lijst</summary><div id="diensten"></div></details><details><summary>Verwijderde diensten - logboeken</summary><div id="verwijderd21"></div></details></div><dialog id="week24Dialog" class="nl-dialog"><h3 id="week24Title"></h3><h4>Dienstsjablonen</h4><div id="week24Templates" class="opr24templates"></div><form id="week24Form"><label for="week24Begin">Begintijd</label><input id="week24Begin" type="text" placeholder="uu:mm" pattern="[0-9]{2}:[0-9]{2}" required><label for="week24End">Eindtijd</label><input id="week24End" type="text" placeholder="uu:mm" pattern="[0-9]{2}:[0-9]{2}" required><label for="week24Break">Pauze (minuten)</label><input id="week24Break" type="number" min="0" step="1" required><label for="weekKleur25">Dienstkleur (optioneel)</label><input id="weekKleur25" type="color" value="#b9dfc6"><label><input id="weekEigen25" type="checkbox"> Eigen kleur gebruiken</label><p id="week24Error" class="fout" role="status"></p><button id="week24Save" type="submit">Dienst toevoegen</button> <button id="week24Close" type="button" class="secundair">Sluiten</button></form></dialog><dialog id="dienstLog21" style="width:min(680px,94vw);max-height:85vh;border:1px solid #c5d2d0;border-radius:14px;padding:20px;overflow:auto"><h3>Dienstlogboek</h3><div id="dienstLogInhoud21"></div><button type="button" id="dienstLogSluit21">Sluiten</button></dialog><button id="publiceerWeek" hidden>&#128226; Weekrooster publiceren</button><p id="publicatieInfo" class="subtiel"></p><p id="melding" class="fout" role="status"></p>
+<div class="sectie"><h3>Ingeplande diensten</h3><div class="riv-week-nav"><button type="button" class="secundair" id="rivWeekPrev">‹ Vorige week</button><strong id="rivWeekLabel" aria-live="polite"></strong><button type="button" id="rivWeekNext">Volgende week ›</button></div><button type="button" class="secundair klein" id="rivWeekToday">Huidige week</button><div id="rivWeekCreate" hidden><p class="subtiel">Voor deze week bestaat nog geen rooster.</p><button type="button" id="rivWeekNew">Conceptrooster aanmaken</button></div><p id="rivWeekMsg" role="status" class="fout"></p><div id="week24"></div><details><summary>Alle diensten als lijst</summary><div id="diensten"></div></details><details><summary>Verwijderde diensten - logboeken</summary><div id="verwijderd21"></div></details></div><dialog id="week24Dialog" class="nl-dialog"><h3 id="week24Title"></h3><h4>Dienstsjablonen</h4><div id="week24Templates" class="opr24templates"></div><form id="week24Form"><label for="week24Begin">Begintijd</label><input id="week24Begin" type="text" placeholder="uu:mm" pattern="[0-9]{2}:[0-9]{2}" required><label for="week24End">Eindtijd</label><input id="week24End" type="text" placeholder="uu:mm" pattern="[0-9]{2}:[0-9]{2}" required><label for="week24Break">Pauze (minuten)</label><input id="week24Break" type="number" min="0" step="1" required><label for="weekKleur25">Dienstkleur (optioneel)</label><input id="weekKleur25" type="color" value="#b9dfc6"><label><input id="weekEigen25" type="checkbox"> Eigen kleur gebruiken</label><p id="week24Error" class="fout" role="status"></p><button id="week24Save" type="submit">Dienst toevoegen</button> <button id="week24Close" type="button" class="secundair">Sluiten</button></form></dialog><dialog id="dienstLog21" style="width:min(680px,94vw);max-height:85vh;border:1px solid #c5d2d0;border-radius:14px;padding:20px;overflow:auto"><h3>Dienstlogboek</h3><div id="dienstLogInhoud21"></div><button type="button" id="dienstLogSluit21">Sluiten</button></dialog><button id="publiceerWeek" hidden>&#128226; Weekrooster publiceren</button><p id="publicatieInfo" class="subtiel"></p><p id="melding" class="fout" role="status"></p>
 </section>
 <section class="kaart" id="overzichtPane" hidden>
 <h2>&#128202; Overzicht</h2><div class="rij"><div><label for="overzichtDatum">Kies een datum</label><input id="overzichtDatum" type="text" data-nl-source="date"></div><div><label for="overzichtModus">Weergave</label><select id="overzichtModus"><option value="dag">Dag</option><option value="week" selected>Week</option><option value="maand">Maand</option></select></div></div><div class="weekrij"><h3 id="overzichtTitel"></h3><button id="verversOverzicht" class="secundair klein">Vernieuwen</button></div><p class="subtiel">Roostermakers zien concepten &#233;n gepubliceerde diensten. Wijzig diensten via het menu Rooster.</p><p id="overzichtMelding" class="fout" role="status"></p><div id="overzichtOpening"></div><div id="overzichtInhoud"></div>
@@ -118,7 +136,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '3.2-alpha.3';
+const RIVAME_VERSION = '3.2-alpha.4';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -951,7 +969,7 @@ function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined
  dlg.addEventListener('close',()=>{gen++;dlg.replaceChildren()});const old=toonDashboard;toonDashboard=async function(){reset();await old();await refresh()};db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN')reset();if(['INITIAL_SESSION','SIGNED_IN','TOKEN_REFRESHED'].includes(event))setTimeout(()=>{if(!el('dashboard').hidden)refresh()},0)});if(!el('dashboard').hidden)refresh();
 })();
 
-// Rivame 3.2-alpha.3 – clock registration
+// Rivame 3.2-alpha.4 – clock registration
 (()=>{
  const get=r=>{if(r.error)throw r.error;return r.data};
  const host=maak('section',undefined,'kaart');host.hidden=true;el('dashboard').after(host);
@@ -1009,6 +1027,19 @@ function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined
  rivHRRoutes.rapportages={dialog:page,open};db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN'){seq++;page.close();page.replaceChildren()}});
 })();
 
+
+// Weeknavigatie in het rooster zelf; bestaande laad- en creatiefuncties blijven leidend.
+(()=>{
+ const prev=el('rivWeekPrev'),next=el('rivWeekNext'),today=el('rivWeekToday'),create=el('rivWeekNew'),msg=el('rivWeekMsg');
+ let busy=false;
+ function refresh(){const date=el('datum').value;el('rivWeekLabel').textContent=date?weekTitel(date):'';el('rivWeekCreate').hidden=el('maakWeek').hidden||!!weekId;}
+ const oldLoad=laadWeek;
+ laadWeek=async function(){try{return await oldLoad.apply(this,arguments)}finally{refresh()}};
+ async function run(fn){if(busy||week24Busy||huidigeLocatie===null)return;busy=true;msg.textContent='';const controls=[prev,next,today,create,el('maakWeek'),el('datum'),el('locatieKeuze')];const states=controls.map(c=>c.disabled);controls.forEach(c=>c.disabled=true);try{await fn();if(el('melding').textContent)msg.textContent=el('melding').textContent}catch(e){msg.textContent=e.message||String(e)}finally{controls.forEach((c,i)=>c.disabled=states[i]);busy=false;refresh()}}
+ function go(n){return run(async()=>{if(bewerkId!==null&&!confirm('Niet-opgeslagen dienstwijzigingen verlaten?'))return;const value=el('datum').value||nlToday();el('datum').value=n===0?maandag(nlToday()):verschuif(maandag(value),n*7);await laadWeek()})}
+ prev.onclick=()=>go(-1);next.onclick=()=>go(1);today.onclick=()=>go(0);
+ create.onclick=()=>run(async()=>{if(!el('maakWeek').hidden&&!weekId)await el('maakWeek').onclick()});refresh();
+})();
 </script>
 </body>
 </html>
