@@ -1,54 +1,5 @@
-
-alles
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="nl-NL">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -78,6 +29,7 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 .openingsbron a{color:var(--park-ink)}
 .maand-dag{min-height:94px}
 @media(max-width:600px){.openingslijst{grid-template-columns:repeat(7,140px)}.maand-dag{min-height:85px}}
+.nl-cal{margin:4px 0 8px}.nl-dialog{border:1px solid #ccd5d8;border-radius:14px;padding:16px;max-width:min(94vw,420px);width:400px;color:#26363d;background:white}.nl-dialog::backdrop{background:#0006}.nl-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:12px 0;text-align:center}.nl-grid button{padding:4px;min-width:0}.nl-weeknav{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.nl-weeknav button{flex:1}input[data-nl-kind]{font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -122,7 +74,7 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <p id="openingBeheerMelding" class="subtiel" role="status"></p></div></section>
 </div>
 <section class="kaart" id="mijnPlanning" hidden><h2>Mijn planning</h2><div class="menu"><button id="mpTabBesch" type="button">Beschikbaarheid</button><button id="mpTabVrij" type="button" class="secundair">Afwezigheid</button></div><label for="mpLoc">Locatie</label><select id="mpLoc"></select><label for="mpWeek">Week (kies een datum)</label><input type="date" id="mpWeek"><p id="mpDead" class="status"></p><div id="mpDays"></div><div id="mpAfw" hidden><h3>Afwezigheid aanvragen</h3><form id="mpAfwForm"><label for="afwSoort">Soort afwezigheid</label><select id="afwSoort"><option value="vrij">Vrij vragen</option><option value="vakantie">Vakantie</option><option value="bijzonder">Bijzonder verlof</option><option value="overig">Overig (niet voor ziekmeldingen)</option></select><label for="afwVan">Vanaf</label><input type="date" id="afwVan" required><label for="afwTot">Tot en met</label><input type="date" id="afwTot" required><button type="submit">Aanvraag indienen</button></form><h3>Mijn aanvragen in deze week</h3><div id="mpAfwLijst"></div></div><p id="mpMsg" role="status"></p><p class="subtiel">Gewone vrije dagen volgen de deadline. Vakantie en bijzonder verlof worden apart beoordeeld; wettelijke verlofsaldi zijn nog niet ingebouwd. Ziekmeldingen en uitzonderingen regel je rechtstreeks met je planner.</p></section><section class="kaart" id="werknemer" hidden><h2>&#128197; Mijn rooster</h2><label for="medewerkerDatum">Kies een week</label><input id="medewerkerDatum" type="date"><h3 id="medewerkerWeek"></h3><div id="medewerkerOpening"></div><p id="medewerkerStatus" role="status"></p><div id="medewerkerDiensten"></div><div class="status"><strong>Totaal geplande uren</strong><p id="medewerkerUren">0 uur</p></div></section>
-<footer>Versie 1.8.0</footer>
+<footer>Versie 1.9.0</footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -134,6 +86,53 @@ let weekId = null, weekStatus = null, bewerkId = null;
 let namen = {}, huidigeDiensten = [];
 let huidigeLocatie = null, locaties = [], gebruikersRol = null;
 let openingCache = new Map();
+// Nederlandse invoer, onafhankelijk van browsertaal. Intern blijft ISO behouden.
+const nlFormat = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function nlParts(d){return Object.fromEntries(nlFormat.formatToParts(d).map(x=>[x.type,x.value]))}
+function nlToday(){const p=nlParts(new Date());return `${p.year}-${p.month}-${p.day}`}
+function nlDate(s){return /^\d{4}-\d{2}-\d{2}$/.test(s)?s.split('-').reverse().join('-'):s}
+function nlISO(kind,raw){
+ const s=raw.trim(); if(!s)return '';
+ const m=s.match(kind==='time'?/^(\d{1,2}):(\d{2})$/:kind==='date'?/^(\d{2})-(\d{2})-(\d{4})$/:/^(\d{2})-(\d{2})-(\d{4})\s+(\d{1,2}):(\d{2})$/);
+ if(!m)return '';
+ const time=(h,n)=>+h<24&&+n<60?`${h.padStart(2,'0')}:${n}`:'';
+ if(kind==='time')return time(m[1],m[2]);
+ const date=`${m[3]}-${m[2]}-${m[1]}`,d=new Date(date+'T12:00:00Z');
+ if(!Number.isFinite(+d)||d.toISOString().slice(0,10)!==date)return '';
+ if(kind==='date')return date;
+ const t=time(m[4],m[5]);return t?date+'T'+t:'';
+}
+function nlDisplay(kind,v){if(!v)return '';if(kind==='time')return v.slice(0,5);return nlDate(v.slice(0,10))+(kind==='datetime-local'?' '+v.slice(11,16):'')}
+function nlInstant(day,time){ // resolve local wall clock, reject DST gaps/ambiguities
+ const target=day+'T'+time,utc=Date.parse(target+'Z');const found=[];
+ for(const offset of [60,120]){const d=new Date(utc-offset*60000),p=nlParts(d);if(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`===target)found.push(d)}
+ if(found.length!==1)throw Error('Deze tijd bestaat niet of is dubbel door de zomer-/wintertijd. Kies een andere tijd.');return found[0];
+}
+const nlValue=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+const nlDone=new WeakSet();
+function nlField(input){
+ if(nlDone.has(input)||!['date','time','datetime-local'].includes(input.type))return;
+ nlDone.add(input);const kind=input.type,initial=input.value,originalDefault=input.defaultValue;input.type='text';input.dataset.nlKind=kind;input.autocomplete='off';input.placeholder=kind==='date'?'dd-mm-jjjj':kind==='time'?'uu:mm':'dd-mm-jjjj uu:mm';input.title=input.placeholder;input.setAttribute('lang','nl-NL');
+ const raw=()=>nlValue.get.call(input);const validate=()=>{const v=nlISO(kind,raw()); const bad=raw().trim()&&(!v||(input.min&&v<input.min)||(input.max&&v>input.max));input.setCustomValidity(bad?'Gebruik '+input.placeholder+' en kies een geldige datum of tijd.':'');return !bad};
+ Object.defineProperty(input,'value',{configurable:true,get(){const v=nlISO(kind,raw());return v&&(!input.min||v>=input.min)&&(!input.max||v<=input.max)?v:''},set(v){nlValue.set.call(input,nlDisplay(kind,String(v??'')));validate()}});
+ input.value=initial;input.defaultValue=nlDisplay(kind,originalDefault);input.value=initial;
+ input.addEventListener('input',validate);input.addEventListener('change',e=>{if(!validate()||!input.value){e.stopImmediatePropagation();input.reportValidity();return}nlValue.set.call(input,nlDisplay(kind,input.value))},true);
+ if(kind!=='time'){
+ const b=document.createElement('button');b.type='button';b.className='secundair klein nl-cal';b.textContent='Kalender';b.setAttribute('aria-label','Datum kiezen');input.insertAdjacentElement('afterend',b);
+ b.onclick=()=>{if(!input.disabled)nlCalendar(input,kind)};
+ }
+}
+function nlCalendar(input,kind){
+ const dialog=document.createElement('dialog');dialog.className='nl-dialog';const picked=input.value.slice(0,10)||nlToday();let month=picked.slice(0,7)+'-01';
+ const close=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove());
+ function draw(){dialog.replaceChildren();const header=maak('div',undefined,'weekrij'),prev=maak('button','Vorige','secundair klein'),next=maak('button','Volgende','secundair klein');prev.type=next.type='button';const shift=n=>{const d=new Date(month+'T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+n);month=d.toISOString().slice(0,10);draw()};prev.onclick=()=>shift(-1);next.onclick=()=>shift(1);header.append(prev,maak('strong',new Date(month+'T12:00:00Z').toLocaleDateString('nl-NL',{month:'long',year:'numeric',timeZone:'UTC'})),next);dialog.append(header);const grid=maak('div',undefined,'nl-grid');for(const name of ['Ma','Di','Wo','Do','Vr','Za','Zo'])grid.append(maak('strong',name));const d=new Date(month+'T12:00:00Z');const first=(d.getUTCDay()+6)%7;for(let i=0;i<first;i++)grid.append(maak('span'));const m=d.getUTCMonth();for(let n=1;n<=31;n++){const day=new Date(Date.UTC(d.getUTCFullYear(),m,n));if(day.getUTCMonth()!==m)break;const iso=day.toISOString().slice(0,10),b=maak('button',String(n),iso===picked?'klein':'secundair klein');b.type='button';b.disabled=!!(input.min&&iso<input.min.slice(0,10)||input.max&&iso>input.max.slice(0,10));b.onclick=()=>{input.value=iso+(kind==='datetime-local'?'T'+(input.value.slice(11,16)||'23:59'):'');close();input.dispatchEvent(new Event('change',{bubbles:true}))};grid.append(b)}dialog.append(grid);const cancel=maak('button','Sluiten','secundair klein');cancel.type='button';cancel.onclick=close;dialog.append(cancel)}
+ document.body.append(dialog);draw();dialog.showModal();
+}
+function nlScan(root){if(root.nodeType!==1)return;if(root.matches?.('input'))nlField(root);root.querySelectorAll?.('input[type=date],input[type=time],input[type=datetime-local]').forEach(nlField)}
+nlScan(document.body);new MutationObserver(rows=>{for(const r of rows)for(const n of r.addedNodes)nlScan(n)}).observe(document.body,{childList:true,subtree:true});
+
+document.addEventListener('reset',e=>{queueMicrotask(()=>{for(const i of e.target.querySelectorAll('input[data-nl-kind]'))i.value=i.value})},true);
+
 const PARKEN = {
  wb:{naam:'WB \u00b7 Attractiepark De Waarbeek',url:'https://waarbeek.nl/openingstijden/',type:'Attractiepark'},
  zd:{naam:'ZD \u00b7 Attractiepark Drouwenerzand',url:'https://drouwenerzand.nl/openingstijden/',type:'Attractiepark'},
@@ -194,22 +193,22 @@ function dagLabel(locatieId,dag){return openingLabel(locatieId,dag)}
 function datumTekst(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function verschuif(s,n){const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+n);return datumTekst(d)}
 function maandag(s){const d=new Date(s+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return datumTekst(d)}
-function lokaleDatum(s){return datumTekst(new Date(s))}
-function lokaleTijd(s){return new Date(s).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}
-function weekTitel(s){return maandag(s)+' t/m '+verschuif(maandag(s),6)}
+function lokaleDatum(s){const p=nlParts(new Date(s));return `${p.year}-${p.month}-${p.day}`}
+function lokaleTijd(s){return new Date(s).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Europe/Amsterdam'})}
+function weekTitel(s){const start=maandag(s),d=new Date(start+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+3);const w=Math.ceil((((d-new Date(Date.UTC(d.getUTCFullYear(),0,1)))/86400000)+1)/7);return 'Week '+w+' | '+nlDate(start)+' t/m '+nlDate(verschuif(start,6))}
 function bericht(s){el('melding').textContent=s}
 function maak(tag,tekst,cls){const x=document.createElement(tag);if(tekst!==undefined)x.textContent=tekst;if(cls)x.className=cls;return x}
 function minutenNetto(d){return Math.max(0,Math.round((new Date(d.eindigt_op)-new Date(d.begint_op))/60000)-(d.pauze_minuten||0))}
 function urenTekst(min){return Math.floor(min/60)+' uur '+min%60+' min'}
 function resetFormulier(){bewerkId=null;el('dienstForm').reset();el('begin').value='09:00';el('eind').value='17:00';el('pauze').value='30';if(el('datum').value)el('werkdag').value=maandag(el('datum').value);el('formulierTitel').textContent='Nieuwe dienst toevoegen';el('opslaan').textContent='Dienst toevoegen';el('annuleren').hidden=true}
 async function controleerConcept(){if(!weekId||huidigeLocatie===null)throw Error('Geen roosterweek of locatie gekozen.');const {data,error}=await db.from('roosterweken').select('status').eq('id',weekId).eq('locatie_id',huidigeLocatie).single();if(error)throw error;if(data.status!=='concept'){await laadWeek();throw Error('Deze week is niet meer in concept.') }}
-async function laadWeek(){weekId=null;weekStatus=null;huidigeDiensten=[];resetFormulier();el('formulier').hidden=true;el('maakWeek').hidden=true;el('publiceerWeek').hidden=true;el('publicatieInfo').textContent='';el('diensten').replaceChildren();bericht('');const start=maandag(el('datum').value);el('weekTitel').textContent=weekTitel(start);await haalOpening(huidigeLocatie,start,verschuif(start,6));openingsDagen('weekOpening',huidigeLocatie,start,7);el('werkdag').min=start;el('werkdag').max=verschuif(start,6);el('werkdag').value=start;const {data,error}=await db.from('roosterweken').select('id,status,gepubliceerd_op').eq('week_start',start).eq('locatie_id',huidigeLocatie).maybeSingle();if(error){bericht(error.message);return}if(!data){el('status').textContent='Nog geen roosterweek aangemaakt.';el('maakWeek').hidden=false;return}weekId=data.id;weekStatus=data.status;el('status').textContent='Status: '+weekStatus;el('formulier').hidden=weekStatus!=='concept'||!el('medewerker').options.length;if(weekStatus==='gepubliceerd'){el('publicatieInfo').textContent='\u2705 Gepubliceerd op '+(data.gepubliceerd_op?new Date(data.gepubliceerd_op).toLocaleString('nl-NL'):'onbekend')+'. Dit rooster is vergrendeld.'}const r=await db.from('diensten').select('id,medewerker_id,begint_op,eindigt_op,pauze_minuten').eq('roosterweek_id',weekId).order('begint_op');if(r.error){bericht(r.error.message);return}huidigeDiensten=r.data;if(!r.data.length){el('diensten').textContent='Nog geen diensten ingepland.';return}if(weekStatus==='concept')el('publiceerWeek').hidden=false;for(const d of r.data){const regel=maak('div',undefined,'dienst');regel.append(maak('strong',namen[d.medewerker_id]||'Medewerker'),maak('p',lokaleDatum(d.begint_op)+' | '+lokaleTijd(d.begint_op)+'\u2013'+lokaleTijd(d.eindigt_op)+' | Pauze '+d.pauze_minuten+' min'));if(weekStatus==='concept'){const kn=maak('div',undefined,'dienstknoppen');const b1=maak('button','\u270f\ufe0f Wijzigen','secundair klein');b1.onclick=()=>wijzigDienst(d.id);const b2=maak('button','\ud83d\uddd1 Verwijderen','gevaar klein');b2.onclick=()=>verwijderDienst(d.id);kn.append(b1,b2);regel.append(kn)}el('diensten').append(regel)}}
+async function laadWeek(){weekId=null;weekStatus=null;huidigeDiensten=[];resetFormulier();el('formulier').hidden=true;el('maakWeek').hidden=true;el('publiceerWeek').hidden=true;el('publicatieInfo').textContent='';el('diensten').replaceChildren();bericht('');const start=maandag(el('datum').value);el('weekTitel').textContent=weekTitel(start);await haalOpening(huidigeLocatie,start,verschuif(start,6));openingsDagen('weekOpening',huidigeLocatie,start,7);el('werkdag').min=start;el('werkdag').max=verschuif(start,6);el('werkdag').value=start;const {data,error}=await db.from('roosterweken').select('id,status,gepubliceerd_op').eq('week_start',start).eq('locatie_id',huidigeLocatie).maybeSingle();if(error){bericht(error.message);return}if(!data){el('status').textContent='Nog geen roosterweek aangemaakt.';el('maakWeek').hidden=false;return}weekId=data.id;weekStatus=data.status;el('status').textContent='Status: '+weekStatus;el('formulier').hidden=weekStatus!=='concept'||!el('medewerker').options.length;if(weekStatus==='gepubliceerd'){el('publicatieInfo').textContent='\u2705 Gepubliceerd op '+(data.gepubliceerd_op?new Date(data.gepubliceerd_op).toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam',hourCycle:'h23'}):'onbekend')+'. Dit rooster is vergrendeld.'}const r=await db.from('diensten').select('id,medewerker_id,begint_op,eindigt_op,pauze_minuten').eq('roosterweek_id',weekId).order('begint_op');if(r.error){bericht(r.error.message);return}huidigeDiensten=r.data;if(!r.data.length){el('diensten').textContent='Nog geen diensten ingepland.';return}if(weekStatus==='concept')el('publiceerWeek').hidden=false;for(const d of r.data){const regel=maak('div',undefined,'dienst');regel.append(maak('strong',namen[d.medewerker_id]||'Medewerker'),maak('p',nlDate(lokaleDatum(d.begint_op))+' | '+lokaleTijd(d.begint_op)+'\u2013'+lokaleTijd(d.eindigt_op)+' | Pauze '+d.pauze_minuten+' min'));if(weekStatus==='concept'){const kn=maak('div',undefined,'dienstknoppen');const b1=maak('button','\u270f\ufe0f Wijzigen','secundair klein');b1.onclick=()=>wijzigDienst(d.id);const b2=maak('button','\ud83d\uddd1 Verwijderen','gevaar klein');b2.onclick=()=>verwijderDienst(d.id);kn.append(b1,b2);regel.append(kn)}el('diensten').append(regel)}}
 function wijzigDienst(id){const d=huidigeDiensten.find(x=>x.id===id);if(!d||weekStatus!=='concept')return;bewerkId=id;el('medewerker').value=d.medewerker_id;el('werkdag').value=lokaleDatum(d.begint_op);el('begin').value=lokaleTijd(d.begint_op);el('eind').value=lokaleTijd(d.eindigt_op);el('pauze').value=d.pauze_minuten;el('formulierTitel').textContent='Dienst wijzigen';el('opslaan').textContent='Wijzigingen opslaan';el('annuleren').hidden=false;el('formulier').scrollIntoView({behavior:'smooth'})}
 async function verwijderDienst(id){if(weekStatus!=='concept'||!confirm('Deze testdienst verwijderen?'))return;try{await controleerConcept();const {data,error}=await db.from('diensten').delete().eq('id',id).eq('roosterweek_id',weekId).select('id');if(error)throw error;if(!data.length)throw Error('Dienst niet verwijderd.');await laadWeek();bericht('Dienst verwijderd.')}catch(e){bericht(e.message)}}
 async function publiceerWeek(){if(!weekId||weekStatus!=='concept'||huidigeLocatie===null)return;if(!confirm('Deze week publiceren en vergrendelen? Er worden nog geen e-mails verstuurd.'))return;const knop=el('publiceerWeek');knop.disabled=true;try{const {data,error}=await db.from('roosterweken').update({status:'gepubliceerd'}).eq('id',weekId).eq('locatie_id',huidigeLocatie).eq('status','concept').select('id');if(error)throw error;if(data.length!==1)throw Error('Publiceren niet gelukt.');await laadWeek();bericht('\u2705 Weekrooster gepubliceerd.')}catch(e){bericht(e.message)}finally{knop.disabled=false}}
-async function laadMedewerkerRooster(){const start=maandag(el('medewerkerDatum').value);el('medewerkerWeek').textContent=weekTitel(start);el('medewerkerDiensten').replaceChildren();el('medewerkerUren').textContent='0 uur';el('medewerkerStatus').textContent='Laden...';const {data:{user},error:ae}=await db.auth.getUser();if(ae||!user){el('medewerkerStatus').textContent='Log opnieuw in.';return}const {data:leden,error:ledenFout}=await db.from('profiel_locaties').select('locatie_id').eq('profiel_id',user.id);if(ledenFout)throw ledenFout;const medewerkerLocaties=leden.map(x=>x.locatie_id);const locatieRes=await db.from('locaties').select('id,naam').in('id',medewerkerLocaties.length?medewerkerLocaties:[-1]);if(!locatieRes.error)locaties=locatieRes.data||[];parkStijl(locaties[0],false);el('medewerkerOpening').replaceChildren();for(const lid of medewerkerLocaties){await haalOpening(lid,start,verschuif(start,6));const loc=locaties.find(x=>String(x.id)===String(lid));el('medewerkerOpening').append(maak('h3',loc?.naam||'Locatie'));const tmp='medewerkerOpeningLoc'+lid;const child=maak('div');child.id=tmp;el('medewerkerOpening').append(child);openingsDagen(tmp,lid,start,7)}if(!medewerkerLocaties.length){el('medewerkerStatus').textContent='Geen locatie toegewezen.';return}const {data:w,error:we}=await db.from('roosterweken').select('id').eq('week_start',start).eq('status','gepubliceerd').in('locatie_id',medewerkerLocaties);if(we)throw we;if(!w.length){el('medewerkerStatus').textContent='Geen gepubliceerd rooster voor deze week.';return}const {data,error}=await db.from('diensten').select('begint_op,eindigt_op,pauze_minuten').eq('medewerker_id',user.id).in('roosterweek_id',w.map(x=>x.id)).order('begint_op');if(error)throw error;if(!data.length){el('medewerkerStatus').textContent='Je bent deze week niet ingeroosterd.';return}el('medewerkerStatus').textContent='Gepubliceerd';let totaal=0;for(const d of data){const net=minutenNetto(d);totaal+=net;const regel=maak('div',undefined,'dienst');regel.append(maak('strong',new Date(d.begint_op).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})),maak('p',lokaleTijd(d.begint_op)+'\u2013'+lokaleTijd(d.eindigt_op)+' \u00b7 Pauze '+d.pauze_minuten+' min \u00b7 Netto '+urenTekst(net)));el('medewerkerDiensten').append(regel)}el('medewerkerUren').textContent=urenTekst(totaal)}
+async function laadMedewerkerRooster(){const start=maandag(el('medewerkerDatum').value);el('medewerkerWeek').textContent=weekTitel(start);el('medewerkerDiensten').replaceChildren();el('medewerkerUren').textContent='0 uur';el('medewerkerStatus').textContent='Laden...';const {data:{user},error:ae}=await db.auth.getUser();if(ae||!user){el('medewerkerStatus').textContent='Log opnieuw in.';return}const {data:leden,error:ledenFout}=await db.from('profiel_locaties').select('locatie_id').eq('profiel_id',user.id);if(ledenFout)throw ledenFout;const medewerkerLocaties=leden.map(x=>x.locatie_id);const locatieRes=await db.from('locaties').select('id,naam').in('id',medewerkerLocaties.length?medewerkerLocaties:[-1]);if(!locatieRes.error)locaties=locatieRes.data||[];parkStijl(locaties[0],false);el('medewerkerOpening').replaceChildren();for(const lid of medewerkerLocaties){await haalOpening(lid,start,verschuif(start,6));const loc=locaties.find(x=>String(x.id)===String(lid));el('medewerkerOpening').append(maak('h3',loc?.naam||'Locatie'));const tmp='medewerkerOpeningLoc'+lid;const child=maak('div');child.id=tmp;el('medewerkerOpening').append(child);openingsDagen(tmp,lid,start,7)}if(!medewerkerLocaties.length){el('medewerkerStatus').textContent='Geen locatie toegewezen.';return}const {data:w,error:we}=await db.from('roosterweken').select('id').eq('week_start',start).eq('status','gepubliceerd').in('locatie_id',medewerkerLocaties);if(we)throw we;if(!w.length){el('medewerkerStatus').textContent='Geen gepubliceerd rooster voor deze week.';return}const {data,error}=await db.from('diensten').select('begint_op,eindigt_op,pauze_minuten').eq('medewerker_id',user.id).in('roosterweek_id',w.map(x=>x.id)).order('begint_op');if(error)throw error;if(!data.length){el('medewerkerStatus').textContent='Je bent deze week niet ingeroosterd.';return}el('medewerkerStatus').textContent='Gepubliceerd';let totaal=0;for(const d of data){const net=minutenNetto(d);totaal+=net;const regel=maak('div',undefined,'dienst');regel.append(maak('strong',new Date(d.begint_op).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Amsterdam'})),maak('p',lokaleTijd(d.begint_op)+'\u2013'+lokaleTijd(d.eindigt_op)+' \u00b7 Pauze '+d.pauze_minuten+' min \u00b7 Netto '+urenTekst(net)));el('medewerkerDiensten').append(regel)}el('medewerkerUren').textContent=urenTekst(totaal)}
 
-function tijdMinuten(iso){const d=new Date(iso);return d.getHours()*60+d.getMinutes()}
+function tijdMinuten(iso){const p=nlParts(new Date(iso));return +p.hour*60+ +p.minute}
 function maakDagTijdlijn(diensten){const buiten=maak('div',undefined,'tijdlijn-scroll'),t=maak('div',undefined,'tijdlijn');const kop=maak('div',undefined,'tijdlijn-kop');kop.append(maak('div','Medewerker','tijdlijn-naam'));const uren=maak('div',undefined,'uren-kop');for(let h=6;h<=22;h++)uren.append(maak('span',String(h).padStart(2,'0')+':00'));kop.append(uren);t.append(kop);const groepen=new Map();for(const d of diensten){if(!groepen.has(d.medewerker_id))groepen.set(d.medewerker_id,[]);groepen.get(d.medewerker_id).push(d)}for(const [id,ds] of groepen){const rij=maak('div',undefined,'tijdlijn-rij'),naam=maak('div',namen[id]||'Medewerker','tijdlijn-naam'),veld=maak('div',undefined,'tijdlijn-veld');for(const d of ds){const begin=tijdMinuten(d.begint_op),eind=tijdMinuten(d.eindigt_op),vanaf=6*60,tot=23*60;const left=Math.max(0,(begin-vanaf)/(tot-vanaf)*100),right=Math.min(100,(eind-vanaf)/(tot-vanaf)*100);if(right<=left)continue;const balk=maak('div',lokaleTijd(d.begint_op)+'\u2013'+lokaleTijd(d.eindigt_op),'balk');balk.style.left=left+'%';balk.style.width=(right-left)+'%';balk.title=(namen[id]||'Medewerker')+' \u00b7 '+lokaleTijd(d.begint_op)+'\u2013'+lokaleTijd(d.eindigt_op);veld.append(balk)}rij.append(naam,veld);t.append(rij)}if(!groepen.size)t.append(maak('p','Geen diensten op deze dag.'));buiten.append(t);return buiten}
 function maakWeekTabel(diensten,start){const buiten=maak('div',undefined,'week-grid'),t=maak('table',undefined,'week-tabel'),kop=maak('tr');kop.append(maak('th','Medewerker'));for(let i=0;i<7;i++){const dag=verschuif(start,i);{const th=maak('th',new Date(dag+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'short',day:'numeric'}));th.append(maak('span',dagLabel(huidigeLocatie,dag),'openingsregel'));kop.append(th)}}t.append(kop);const groepen=new Map();for(const d of diensten){if(!groepen.has(d.medewerker_id))groepen.set(d.medewerker_id,[]);groepen.get(d.medewerker_id).push(d)}for(const [id,ds] of groepen){const rij=maak('tr');rij.append(maak('td',namen[id]||'Medewerker'));for(let i=0;i<7;i++){const datum=verschuif(start,i),vak=maak('td');for(const d of ds.filter(x=>lokaleDatum(x.begint_op)===datum))vak.append(maak('div',lokaleTijd(d.begint_op)+'\u2013'+lokaleTijd(d.eindigt_op),'blok'));rij.append(vak)}t.append(rij)}if(!groepen.size)buiten.append(maak('p','Geen diensten in deze week.'));else{buiten.append(t)}return buiten}
 function maakMaandKalender(diensten,datum){const d=new Date(datum+'T12:00:00'),jaar=d.getFullYear(),maand=d.getMonth(),dagen=new Date(jaar,maand+1,0).getDate(),offset=(new Date(jaar,maand,1).getDay()+6)%7;const grid=maak('div',undefined,'maand-grid');for(const x of ['Ma','Di','Wo','Do','Vr','Za','Zo'])grid.append(maak('strong',x));for(let i=0;i<offset;i++)grid.append(maak('div',undefined,'maand-leeg'));for(let dag=1;dag<=dagen;dag++){const datumString=datumTekst(new Date(jaar,maand,dag)),ds=diensten.filter(x=>lokaleDatum(x.begint_op)===datumString),vak=maak('div',undefined,'maand-dag');vak.append(maak('strong',String(dag)));vak.append(maak('small',dagLabel(huidigeLocatie,datumString),'openingsregel'));if(ds.length){vak.append(maak('small',new Set(ds.map(x=>x.medewerker_id)).size+' medewerkers'));vak.title=ds.map(x=>(namen[x.medewerker_id]||'Medewerker')+' '+lokaleTijd(x.begint_op)+'\u2013'+lokaleTijd(x.eindigt_op)).join('\n')}grid.append(vak)}return grid}
@@ -294,7 +293,7 @@ async function verwijderLocatieKoppeling(profiel,knop){
   if(authFout)throw authFout;
   if(profiel.id===user?.id)throw Error('Je kunt je eigen beheerderskoppeling hier niet verwijderen.');
   // Blokkeer loskoppelen als de medewerker nog toekomstige diensten heeft.
-  const dezeWeek=maandag(datumTekst(new Date()));
+  const dezeWeek=maandag(nlToday());
   const {data:weken,error:wekenFout}=await db.from('roosterweken')
    .select('id').eq('locatie_id',locatie_id).gte('week_start',dezeWeek);
   if(wekenFout)throw wekenFout;
@@ -374,10 +373,10 @@ async function toonDashboard(){
 }
 
 function kiesTab(tab){el('roosterPane').hidden=tab!=='rooster';el('overzichtPane').hidden=tab!=='overzicht';el('medewerkersPane').hidden=tab!=='medewerkers';el('beheerPane').hidden=tab!=='beheer';for(const [id,waarde] of [['tabRooster','rooster'],['tabOverzicht','overzicht'],['tabMedewerkers','medewerkers'],['tabBeheer','beheer']])el(id).className=tab===waarde?'':'secundair';if(tab==='overzicht'&&huidigeLocatie!==null)laadOverzicht().catch(e=>el('overzichtMelding').textContent=e.message);if(tab==='medewerkers')laadMedewerkersOverzicht().catch(e=>el('medewerkersMelding').textContent=e.message);if(tab==='beheer'){parkStijl(actiefPark(),true);toonLocatieBeheer()}else parkStijl(actiefPark(),false)}
-el('datum').value=datumTekst(new Date());el('medewerkerDatum').value=datumTekst(new Date());el('overzichtDatum').value=datumTekst(new Date());
+el('datum').value=nlToday();el('medewerkerDatum').value=nlToday();el('overzichtDatum').value=nlToday();
 el('datum').onchange=()=>laadWeek().catch(e=>bericht(e.message));el('medewerkerDatum').onchange=()=>laadMedewerkerRooster().catch(e=>el('medewerkerStatus').textContent=e.message);el('overzichtDatum').onchange=()=>laadOverzicht().catch(e=>el('overzichtMelding').textContent=e.message);el('overzichtModus').onchange=()=>laadOverzicht().catch(e=>el('overzichtMelding').textContent=e.message);el('verversOverzicht').onclick=()=>laadOverzicht().catch(e=>el('overzichtMelding').textContent=e.message);el('tabRooster').onclick=()=>kiesTab('rooster');el('tabOverzicht').onclick=()=>kiesTab('overzicht');el('tabMedewerkers').onclick=()=>kiesTab('medewerkers');el('verversMedewerkers').onclick=()=>laadMedewerkersOverzicht().catch(e=>el('medewerkersMelding').textContent=e.message);
 el('tabBeheer').onclick=()=>kiesTab('beheer');
-el('openingDatum').value=datumTekst(new Date());
+el('openingDatum').value=nlToday();
 el('openingStatus').onchange=()=>{el('openingTijden').hidden=el('openingStatus').value==='gesloten'};
 el('openingForm').onsubmit=async e=>{
  e.preventDefault();if(gebruikersRol!=='beheerder')return;
@@ -390,7 +389,7 @@ el('openingForm').onsubmit=async e=>{
   const {error}=await db.from('park_openingstijden').upsert({locatie_id,datum,status,open_van,open_tot},{onConflict:'locatie_id,datum'});
   if(error)throw error;
   openingCache.set(String(locatie_id)+'|'+datum,{locatie_id,datum,status,open_van,open_tot});
-  el('openingBeheerMelding').textContent='\u2705 Openingstijden opgeslagen voor '+datum+'.';
+  el('openingBeheerMelding').textContent='\u2705 Openingstijden opgeslagen voor '+nlDate(datum)+'.';
  }catch(err){el('openingBeheerMelding').textContent='Opslaan mislukt: '+err.message}
  finally{knop.disabled=false}
 };
@@ -398,14 +397,14 @@ el('locatieKeuze').onchange=async()=>{huidigeLocatie=Number(el('locatieKeuze').v
 el('locatieForm').onsubmit=async e=>{e.preventDefault();if(gebruikersRol!=='beheerder')return;const naam=el('nieuweLocatie').value.trim();if(!naam)return;const knop=e.target.querySelector('button');knop.disabled=true;try{const {error}=await db.from('locaties').insert({naam});if(error)throw error;el('nieuweLocatie').value='';el('beheerMelding').textContent='Locatie toegevoegd.';await laadLocaties()}catch(err){el('beheerMelding').textContent=err.message}finally{knop.disabled=false}};
 el('loginForm').onsubmit=async e=>{e.preventDefault();const knop=e.target.querySelector('button');knop.disabled=true;el('loginMelding').textContent='';try{const {error}=await db.auth.signInWithPassword({email:el('email').value,password:el('password').value});if(error)throw error;await toonDashboard()}catch(err){el('loginMelding').textContent='Inloggen mislukt: '+err.message}finally{knop.disabled=false}};
 el('maakWeek').onclick=async()=>{const {error}=await db.from('roosterweken').insert({week_start:maandag(el('datum').value),locatie_id:huidigeLocatie,status:'concept'});if(error)bericht(error.message);else await laadWeek()};el('annuleren').onclick=resetFormulier;el('publiceerWeek').onclick=publiceerWeek;
-el('dienstForm').onsubmit=async e=>{e.preventDefault();const knop=el('opslaan');knop.disabled=true;try{await controleerConcept();const dag=el('werkdag').value,start=new Date(dag+'T'+el('begin').value),eind=new Date(dag+'T'+el('eind').value),pauze=Number(el('pauze').value);if(dag<maandag(el('datum').value)||dag>verschuif(maandag(el('datum').value),6))throw Error('Kies een dag in de geselecteerde week.');if(eind<=start||pauze<0||pauze>=(eind-start)/60000)throw Error('Controleer werktijden en pauze.');const gegevens={medewerker_id:el('medewerker').value,begint_op:start.toISOString(),eindigt_op:eind.toISOString(),pauze_minuten:pauze};let r;if(bewerkId!==null)r=await db.from('diensten').update(gegevens).eq('id',bewerkId).eq('roosterweek_id',weekId).select('id');else r=await db.from('diensten').insert({...gegevens,roosterweek_id:weekId}).select('id');if(r.error)throw r.error;if(!r.data.length)throw Error('Opslaan niet gelukt.');await laadWeek();bericht('Dienst opgeslagen.')}catch(err){bericht(err.message)}finally{knop.disabled=false}};
-el('logout').onclick=async()=>{await db.auth.signOut();el('password').value='';await toonDashboard()};
+el('dienstForm').onsubmit=async e=>{e.preventDefault();const knop=el('opslaan');knop.disabled=true;try{await controleerConcept();const dag=el('werkdag').value,start=nlInstant(dag,el('begin').value),eind=nlInstant(dag,el('eind').value),pauze=Number(el('pauze').value);if(dag<maandag(el('datum').value)||dag>verschuif(maandag(el('datum').value),6))throw Error('Kies een dag in de geselecteerde week.');if(eind<=start||pauze<0||pauze>=(eind-start)/60000)throw Error('Controleer werktijden en pauze.');const gegevens={medewerker_id:el('medewerker').value,begint_op:start.toISOString(),eindigt_op:eind.toISOString(),pauze_minuten:pauze};let r;if(bewerkId!==null)r=await db.from('diensten').update(gegevens).eq('id',bewerkId).eq('roosterweek_id',weekId).select('id');else r=await db.from('diensten').insert({...gegevens,roosterweek_id:weekId}).select('id');if(r.error)throw r.error;if(!r.data.length)throw Error('Opslaan niet gelukt.');await laadWeek();bericht('Dienst opgeslagen.')}catch(err){bericht(err.message)}finally{knop.disabled=false}};
+el('logout').onclick=async()=>{const {error}=await db.auth.signOut();if(error){alert('Uitloggen mislukt: '+error.message);return}el('password').value='';huidigeLocatie=null;locaties=[];namen={};openingCache.clear();await toonDashboard()};
 
 // Version 1.6.0: planning preferences and ordinary time-off requests.
 let mpGeneration=0, plGeneration=0;
 const planStatus={beschikbaar:'Beschikbaar',niet_beschikbaar:'Niet beschikbaar',gedeeltelijk:'Gedeeltelijk beschikbaar',aangevraagd:'Aangevraagd',goedgekeurd:'Goedgekeurd',afgewezen:'Afgewezen'};
-function planWeek(id){return maandag(el(id).value||datumTekst(new Date()))}
-function mooiDeadline(s){return s?s.slice(0,16).replace('T',' om '):'Niet ingesteld (gesloten)'}
+function planWeek(id){return maandag(el(id).value||nlToday())}
+function mooiDeadline(s){return s?nlDate(s.slice(0,10))+' om '+s.slice(11,16):'Niet ingesteld (gesloten)'}
 function planDag(s){return new Date(s+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'short'})}
 function planCheck(r){if(r.error)throw Error(r.error.message);return r.data}
 function planAct(button,doe,output){button.onclick=async()=>{button.disabled=true;try{await doe()}catch(e){el(output).textContent=e.message}finally{button.disabled=false}}}
@@ -437,7 +436,7 @@ async function mpLoad(){
  const van=maak('input'),tot=maak('input');van.type=tot.type='time';van.value=old?.van?.slice(0,5)||'09:00';tot.value=old?.tot?.slice(0,5)||'17:00';van.setAttribute('aria-label','Vanaf');tot.setAttribute('aria-label','Tot');const tijden=maak('div',undefined,'kolommen');tijden.append(van,tot);const sync=()=>{tijden.hidden=sel.value!=='gedeeltelijk'};sel.onchange=sync;sync();
  const dagOpen=open&&dag>=nu.slice(0,10);const save=maak('button',dagOpen?'Beschikbaarheid opslaan':'Beschikbaarheid gesloten','klein');save.disabled=!dagOpen;sel.disabled=van.disabled=tot.disabled=!dagOpen;
  planAct(save,async()=>{if(!sel.value)throw Error('Kies je beschikbaarheid.');const part=sel.value==='gedeeltelijk';if(part&&(!van.value||!tot.value||van.value>=tot.value))throw Error('Controleer de tijden.');planCheck(await db.from('planning_beschikbaarheid').upsert({locatie_id:loc,profiel_id:user.id,datum:dag,status:sel.value,van:part?van.value:null,tot:part?tot.value:null},{onConflict:'locatie_id,profiel_id,datum'}).select('datum').single());await mpLoad();el('mpMsg').textContent='Beschikbaarheid opgeslagen.'},'mpMsg');
- card.append(sel,tijden,save);el('mpDays').append(card);
+ card.append(sel,tijden,save);el('mpDays').append(card);nlField(van);nlField(tot);
  }
 }
 async function plLoad(){
@@ -449,7 +448,7 @@ async function plLoad(){
 
 }
 el('plDeadForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const loc=huidigeLocatie,week=planWeek('plWeek');if(loc===null)throw Error('Kies een locatie.');planCheck(await db.from('planning_deadlines').upsert({locatie_id:loc,week_start:week,beschikbaar_tot:el('plBesch').value,vrij_tot:el('plVrij').value},{onConflict:'locatie_id,week_start'}).select('week_start').single());await plLoad();el('plMsg').textContent='Deadlines opgeslagen.'}catch(e){el('plMsg').textContent=e.message}finally{b.disabled=false}};
-el('plWeek').value=el('mpWeek').value=datumTekst(new Date());
+el('plWeek').value=el('mpWeek').value=nlToday();
 el('mpLoc').onchange=el('mpWeek').onchange=()=>mpLoad().catch(e=>el('mpMsg').textContent=e.message);
 el('plWeek').onchange=()=>plLoad().catch(e=>el('plMsg').textContent=e.message);
 const oudTab160=kiesTab;kiesTab=function(tab){oudTab160(tab);el('planningPane').hidden=tab!=='planning';el('tabPlanning').className=tab==='planning'?'':'secundair';if(tab==='planning')plLoad().catch(e=>el('plMsg').textContent=e.message)};
@@ -467,17 +466,17 @@ el('plStdForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySele
 // Version 1.8.0: dedicated absence overview, with existing RLS.
 function afwSoortNaam(k){return ({vrij:'Vrij vragen',vakantie:'Vakantie',bijzonder:'Bijzonder verlof',overig:'Overig'})[k]||'Vrij vragen'}
 let paGen=0, raGen=0;
-el('paVan').value=maandag(datumTekst(new Date()));
+el('paVan').value=maandag(nlToday());
 el('paTot').value=verschuif(el('paVan').value,90);
 async function paLoad(){
  const gen=++paGen,loc=huidigeLocatie,van=el('paVan').value,tot=el('paTot').value;
- const host=el('paList');host.replaceChildren();el('paCounts').textContent='';el('paMsg').textContent='Laden...';el('afwLocNaam').textContent=actiefPark()?.naam||'';
+ const host=el('paList');host.replaceChildren();el('afwCounts').textContent='';el('paMsg').textContent='Laden...';el('afwLocNaam').textContent=actiefPark()?.naam||'';
  if(loc===null||!van||!tot||tot<van||tot>verschuif(van,366))throw Error('Kies een locatie en een periode van maximaal 367 dagen.');
  const counters=await Promise.all(['aangevraagd','goedgekeurd','afgewezen'].map(status=>db.from('planning_vrij').select('datum',{count:'exact',head:true}).eq('locatie_id',loc).gte('datum',van).lte('datum',tot).eq('status',status)));
  let q=db.from('planning_vrij').select('profiel_id,datum,status,soort',{count:'exact'}).eq('locatie_id',loc).gte('datum',van).lte('datum',tot).order('datum').order('profiel_id').limit(1000);
  if(el('paStatus').value)q=q.eq('status',el('paStatus').value);if(el('paSoort').value)q=q.eq('soort',el('paSoort').value);
  const r=await q;const rows=planCheck(r);if(gen!==paGen||String(loc)!==String(huidigeLocatie))return;
- counters.forEach(planCheck);el('paCounts').textContent='In behandeling: '+counters[0].count+' | Goedgekeurd: '+counters[1].count+' | Afgewezen: '+counters[2].count+' (dagen in periode)';
+ counters.forEach(planCheck);el('afwCounts').textContent='In behandeling: '+counters[0].count+' | Goedgekeurd: '+counters[1].count+' | Afgewezen: '+counters[2].count+' (dagen in periode)';
  const zoek=el('paNaam').value.trim().toLocaleLowerCase('nl');const visible=rows.filter(x=>!zoek||(namen[x.profiel_id]||'Medewerker').toLocaleLowerCase('nl').includes(zoek));
  el('paMsg').textContent=visible.length+' dagaanvragen zichtbaar'+(r.count>rows.length?' (eerste '+rows.length+'; verklein de periode of filter)':'');
  if(!visible.length)host.textContent='Geen aanvragen gevonden.';
@@ -494,11 +493,9 @@ async function roosterAfwLoad(){const gen=++raGen,loc=huidigeLocatie,week=maanda
 const oudWeek180=laadWeek;laadWeek=async function(){await oudWeek180();await roosterAfwLoad()};
 const oudDash180=toonDashboard;toonDashboard=async function(){++paGen;++raGen;el('paList').replaceChildren();el('afwPane').hidden=true;el('roosterAfw').hidden=true;await oudDash180()};
 
+for(const id of ['datum','medewerkerDatum','plWeek','mpWeek','overzichtDatum']){const input=el(id),bar=maak('div',undefined,'nl-weeknav');for(const [label,delta] of [['Vorige',-1],['Vandaag',0],['Volgende',1]]){const b=maak('button',label,'secundair klein');b.type='button';b.onclick=()=>{const current=input.value||nlToday();let target=nlToday();if(delta){const mode=id==='overzichtDatum'?el('overzichtModus').value:'week';if(mode==='maand'){const d=new Date(current.slice(0,7)+'-01T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+delta);target=d.toISOString().slice(0,10)}else target=verschuif(current,delta*(mode==='dag'?1:7))}input.value=target;input.dispatchEvent(new Event('change',{bubbles:true}))};bar.append(b)}input.insertAdjacentElement('afterend',bar)}
+
 toonDashboard().catch(e=>{el('login').hidden=false;el('dashboard').hidden=true;el('planner').hidden=true;el('werknemer').hidden=true;el('loginMelding').textContent='Fout: '+e.message});
 </script>
 </body>
 </html>
-
-
-
-
