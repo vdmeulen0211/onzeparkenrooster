@@ -1,3 +1,52 @@
+
+alles
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -40,9 +89,9 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <section class="kaart" id="dashboard" hidden><div class="weekrij"><div><strong id="welkom">Welkom</strong><div class="subtiel" id="rol"></div></div><button id="logout" class="secundair klein">Uitloggen</button></div></section>
 <div id="planner" hidden>
 <section class="kaart"><label for="locatieKeuze">Huidige locatie</label><select id="locatieKeuze" aria-label="Locatie kiezen"></select><p id="locatieMelding" class="fout" role="status"></p></section>
-<div id="parkBanner" class="park-banner" hidden></div><nav class="kaart menu" aria-label="Plannermenu"><button id="tabRooster">Rooster</button><button id="tabOverzicht" class="secundair">Overzicht</button><button id="tabMedewerkers" class="secundair">Medewerkers</button><button id="tabPlanning" class="secundair">Beschikbaarheid</button><button id="tabBeheer" class="secundair" hidden>Beheer</button></nav>
+<div id="parkBanner" class="park-banner" hidden></div><nav class="kaart menu" aria-label="Plannermenu"><button id="tabRooster">Rooster</button><button id="tabOverzicht" class="secundair">Overzicht</button><button id="tabMedewerkers" class="secundair">Medewerkers</button><button id="tabPlanning" class="secundair">Beschikbaarheid</button><button id="tabAfw" class="secundair">Afwezigheid</button><button id="tabBeheer" class="secundair" hidden>Beheer</button></nav>
 <section class="kaart" id="roosterPane">
-<h2>&#128197; Weekrooster</h2><div id="weekOpening" class="sectie"></div><label for="datum">Kies een datum in de week</label><input id="datum" type="date"><h3 id="weekTitel"></h3><p class="status" id="status"></p><button id="maakWeek" hidden>Conceptweek aanmaken</button>
+<h2>&#128197; Weekrooster</h2><div id="weekOpening" class="sectie"></div><label for="datum">Kies een datum in de week</label><input id="datum" type="date"><h3 id="weekTitel"></h3><div id="roosterAfw" class="status" hidden></div><p class="status" id="status"></p><button id="maakWeek" hidden>Conceptweek aanmaken</button>
 <div id="formulier" hidden><h3 id="formulierTitel">Nieuwe dienst toevoegen</h3><form id="dienstForm"><label for="medewerker">Medewerker</label><select id="medewerker" required></select><label for="werkdag">Datum</label><input id="werkdag" type="date" required><div class="kolommen"><div><label for="begin">Begintijd</label><input id="begin" type="time" value="09:00" required></div><div><label for="eind">Eindtijd</label><input id="eind" type="time" value="17:00" required></div></div><label for="pauze">Pauze (minuten)</label><input id="pauze" type="number" min="0" value="30" required><button id="opslaan" type="submit">Dienst toevoegen</button><button id="annuleren" type="button" class="secundair" hidden>Wijziging annuleren</button></form></div>
 <div class="sectie"><h3>Ingeplande diensten</h3><div id="diensten"></div></div><button id="publiceerWeek" hidden>&#128226; Weekrooster publiceren</button><p id="publicatieInfo" class="subtiel"></p><p id="melding" class="fout" role="status"></p>
 </section>
@@ -61,7 +110,7 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <p id="koppelingMelding" class="fout" role="status"></p>
 </div>
 </section>
-<section class="kaart" id="planningPane" hidden><h2>Beschikbaarheid en aanvragen</h2><p class="subtiel">Instellingen gelden per gekozen locatie en week. Tijden zijn Nederlandse lokale tijden.</p><label for="plWeek">Roosterweek</label><input type="date" id="plWeek"><form id="plStdForm"><h3>Automatische standaard per locatie</h3><label for="plStdBesch">Beschikbaarheid sluit (weken vooraf)</label><input id="plStdBesch" type="number" min="0" max="52" required><label for="plStdVrij">Vrij vragen sluit (weken vooraf)</label><input id="plStdVrij" type="number" min="0" max="52" required><p class="subtiel">2 = sluit op zondagavond voor de maandag twee weken vooraf. 0 = zondagavond direct voor de roosterweek.</p><button type="submit">Standaard opslaan</button></form><form id="plDeadForm"><h3>Afwijking voor deze week</h3><label for="plBesch">Beschikbaarheid sluit op</label><input type="datetime-local" id="plBesch" required><label for="plVrij">Vrij vragen sluit op</label><input type="datetime-local" id="plVrij" required><button type="submit">Deadlines opslaan</button></form><p id="plMsg" role="status"></p><h3>Doorgegeven beschikbaarheid</h3><div id="plAvail"></div><h3>Vrij-aanvragen</h3><div id="plReq"></div></section><section class="kaart" id="beheerPane" hidden><h2>&#128205; Beheer locaties</h2><p class="subtiel">Alleen voor beheerders. Locaties toevoegen en hernoemen.</p><div id="locatiesLijst"></div><form id="locatieForm"><label for="nieuweLocatie">Nieuwe locatie</label><input id="nieuweLocatie" maxlength="100" placeholder="Naam van locatie" required><button type="submit">Locatie toevoegen</button></form><p class="fout" id="beheerMelding" role="status"></p>
+<section class="kaart" id="planningPane" hidden><h2>Beschikbaarheid en deadlines</h2><p class="subtiel">Instellingen gelden per gekozen locatie en week. Tijden zijn Nederlandse lokale tijden.</p><label for="plWeek">Roosterweek</label><input type="date" id="plWeek"><form id="plStdForm"><h3>Automatische standaard per locatie</h3><label for="plStdBesch">Beschikbaarheid sluit (weken vooraf)</label><input id="plStdBesch" type="number" min="0" max="52" required><label for="plStdVrij">Vrij vragen sluit (weken vooraf)</label><input id="plStdVrij" type="number" min="0" max="52" required><p class="subtiel">2 = sluit op zondagavond voor de maandag twee weken vooraf. 0 = zondagavond direct voor de roosterweek.</p><button type="submit">Standaard opslaan</button></form><form id="plDeadForm"><h3>Afwijking voor deze week</h3><label for="plBesch">Beschikbaarheid sluit op</label><input type="datetime-local" id="plBesch" required><label for="plVrij">Vrij vragen sluit op</label><input type="datetime-local" id="plVrij" required><button type="submit">Deadlines opslaan</button></form><p id="plMsg" role="status"></p><h3>Doorgegeven beschikbaarheid</h3><div id="plAvail"></div><div id="plReq" hidden></div></section><section class="kaart" id="afwPane" hidden><h2>Afwezigheid</h2><p id="afwLocNaam" class="subtiel"></p><p id="afwCounts" class="status"></p><div class="kolommen"><div><label for="paVan">Vanaf</label><input id="paVan" type="date"></div><div><label for="paTot">Tot en met</label><input id="paTot" type="date"></div><div><label for="paStatus">Status</label><select id="paStatus"><option value="">Alle statussen</option><option value="aangevraagd">In behandeling</option><option value="goedgekeurd">Goedgekeurd</option><option value="afgewezen">Afgewezen</option></select></div><div><label for="paSoort">Soort afwezigheid</label><select id="paSoort"><option value="">Alle soorten</option><option value="vrij">Vrij vragen</option><option value="vakantie">Vakantie</option><option value="bijzonder">Bijzonder verlof</option><option value="overig">Overig</option></select></div></div><label for="paNaam">Zoek medewerker</label><input id="paNaam" type="search" placeholder="Naam"><button id="paLoad" type="button" class="secundair">Vernieuwen</button><p id="paMsg" role="status"></p><div id="paList"></div><p class="subtiel">Aanvragen worden per dag beoordeeld. Goedkeuring wijzigt bestaande diensten niet automatisch. Controleer het rooster.</p></section><section class="kaart" id="beheerPane" hidden><h2>&#128205; Beheer locaties</h2><p class="subtiel">Alleen voor beheerders. Locaties toevoegen en hernoemen.</p><div id="locatiesLijst"></div><form id="locatieForm"><label for="nieuweLocatie">Nieuwe locatie</label><input id="nieuweLocatie" maxlength="100" placeholder="Naam van locatie" required><button type="submit">Locatie toevoegen</button></form><p class="fout" id="beheerMelding" role="status"></p>
 <div class="sectie"><h3>Openingstijden / servicetijden vastleggen</h3>
 <p class="subtiel">Voor WB en ZD kun je de tijden van de afzonderlijke offici&#235;le openingskalenders gebruiken. Voor VP vul je eigen service- of receptietijden in; die worden nooit automatisch overgenomen van ZD. Alleen beheerders kunnen tijden wijzigen.</p>
 <form id="openingForm">
@@ -72,8 +121,8 @@ h1{color:var(--park)}button:not(.secundair):not(.gevaar){background:var(--park)}
 <button type="submit">Openingstijden opslaan</button></form>
 <p id="openingBeheerMelding" class="subtiel" role="status"></p></div></section>
 </div>
-<section class="kaart" id="mijnPlanning" hidden><h2>Mijn planning</h2><div class="menu"><button id="mpTabBesch" type="button">Beschikbaarheid</button><button id="mpTabVrij" type="button" class="secundair">Afwezigheid</button></div><label for="mpLoc">Locatie</label><select id="mpLoc"></select><label for="mpWeek">Week (kies een datum)</label><input type="date" id="mpWeek"><p id="mpDead" class="status"></p><div id="mpDays"></div><div id="mpAfw" hidden><h3>Afwezigheid aanvragen</h3><form id="mpAfwForm"><label for="afwVan">Vanaf</label><input type="date" id="afwVan" required><label for="afwTot">Tot en met</label><input type="date" id="afwTot" required><button type="submit">Vrij aanvragen</button></form><h3>Mijn aanvragen in deze week</h3><div id="mpAfwLijst"></div></div><p id="mpMsg" role="status"></p><p class="subtiel">Gewone vrije dagen aanvragen; wettelijk verlof en uitzonderingen na de deadline regel je voorlopig rechtstreeks met je planner.</p></section><section class="kaart" id="werknemer" hidden><h2>&#128197; Mijn rooster</h2><label for="medewerkerDatum">Kies een week</label><input id="medewerkerDatum" type="date"><h3 id="medewerkerWeek"></h3><div id="medewerkerOpening"></div><p id="medewerkerStatus" role="status"></p><div id="medewerkerDiensten"></div><div class="status"><strong>Totaal geplande uren</strong><p id="medewerkerUren">0 uur</p></div></section>
-<footer>Versie 1.7.0</footer>
+<section class="kaart" id="mijnPlanning" hidden><h2>Mijn planning</h2><div class="menu"><button id="mpTabBesch" type="button">Beschikbaarheid</button><button id="mpTabVrij" type="button" class="secundair">Afwezigheid</button></div><label for="mpLoc">Locatie</label><select id="mpLoc"></select><label for="mpWeek">Week (kies een datum)</label><input type="date" id="mpWeek"><p id="mpDead" class="status"></p><div id="mpDays"></div><div id="mpAfw" hidden><h3>Afwezigheid aanvragen</h3><form id="mpAfwForm"><label for="afwSoort">Soort afwezigheid</label><select id="afwSoort"><option value="vrij">Vrij vragen</option><option value="vakantie">Vakantie</option><option value="bijzonder">Bijzonder verlof</option><option value="overig">Overig (niet voor ziekmeldingen)</option></select><label for="afwVan">Vanaf</label><input type="date" id="afwVan" required><label for="afwTot">Tot en met</label><input type="date" id="afwTot" required><button type="submit">Aanvraag indienen</button></form><h3>Mijn aanvragen in deze week</h3><div id="mpAfwLijst"></div></div><p id="mpMsg" role="status"></p><p class="subtiel">Gewone vrije dagen volgen de deadline. Vakantie en bijzonder verlof worden apart beoordeeld; wettelijke verlofsaldi zijn nog niet ingebouwd. Ziekmeldingen en uitzonderingen regel je rechtstreeks met je planner.</p></section><section class="kaart" id="werknemer" hidden><h2>&#128197; Mijn rooster</h2><label for="medewerkerDatum">Kies een week</label><input id="medewerkerDatum" type="date"><h3 id="medewerkerWeek"></h3><div id="medewerkerOpening"></div><p id="medewerkerStatus" role="status"></p><div id="medewerkerDiensten"></div><div class="status"><strong>Totaal geplande uren</strong><p id="medewerkerUren">0 uur</p></div></section>
+<footer>Versie 1.8.0</footer>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -381,7 +430,7 @@ async function mpLoad(){
  const nu=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date()).replace(' ','T');
  const open=!!dead&&nu<dead.beschikbaar_tot;
  el('afwVan').value=week;el('afwTot').value=week;
- for(const req of vr){el('mpAfwLijst').append(maak('p',planDag(req.datum)+' | '+planStatus[req.status]));}if(!vr.length)el('mpAfwLijst').textContent='Geen aanvragen in deze week.';
+ for(const req of vr){el('mpAfwLijst').append(maak('p',planDag(req.datum)+' | '+afwSoortNaam(req.soort)+' | '+planStatus[req.status]));}if(!vr.length)el('mpAfwLijst').textContent='Geen aanvragen in deze week.';
  for(let i=0;i<7;i++){
  const dag=verschuif(week,i),old=av.find(x=>x.datum===dag),req=vr.find(x=>x.datum===dag),card=maak('div',undefined,'dienst');card.append(maak('h3',planDag(dag)));
  const sel=maak('select');sel.setAttribute('aria-label','Beschikbaarheid '+dag);for(const k of ['','beschikbaar','niet_beschikbaar','gedeeltelijk']){const o=maak('option',planStatus[k]||'Nog niet doorgegeven');o.value=k;sel.append(o)}sel.value=old?.status||'';
@@ -393,12 +442,11 @@ async function mpLoad(){
 }
 async function plLoad(){
  const gen=++plGeneration,loc=huidigeLocatie,week=planWeek('plWeek');el('plWeek').value=week;el('plAvail').replaceChildren();el('plReq').replaceChildren();el('plBesch').value='';el('plVrij').value='';el('plMsg').textContent='Laden...';if(loc===null){el('plMsg').textContent='Kies een locatie.';return}
- const [d,a,v]=await Promise.all([db.rpc('planning_effectieve_deadlines',{p_locatie:loc,p_week:week}).maybeSingle(),db.from('planning_beschikbaarheid').select('*').eq('locatie_id',loc).gte('datum',week).lte('datum',verschuif(week,6)).order('datum'),db.from('planning_vrij').select('*').eq('locatie_id',loc).gte('datum',week).lte('datum',verschuif(week,6)).order('datum')]);const dead=planCheck(d),av=planCheck(a),vr=planCheck(v);if(gen!==plGeneration)return;
+ const [d,a]=await Promise.all([db.rpc('planning_effectieve_deadlines',{p_locatie:loc,p_week:week}).maybeSingle(),db.from('planning_beschikbaarheid').select('*').eq('locatie_id',loc).gte('datum',week).lte('datum',verschuif(week,6)).order('datum')]);const dead=planCheck(d),av=planCheck(a);if(gen!==plGeneration)return;
  if(dead){el('plBesch').value=dead.beschikbaar_tot.slice(0,16);el('plVrij').value=dead.vrij_tot.slice(0,16)}el('plMsg').textContent=dead?.automatisch?'Automatische standaard actief.':'Afwijkende weekdeadline actief.';const std=planCheck(await db.from('planning_standaarden').select('*').eq('locatie_id',loc).maybeSingle());if(gen!==plGeneration)return;el('plStdBesch').value=std?.beschikbaar_weken??2;el('plStdVrij').value=std?.vrij_weken??2;
  if(!av.length)el('plAvail').textContent='Nog geen beschikbaarheid doorgegeven.';
  for(const x of av){const r=maak('div',undefined,'dienst');r.append(maak('strong',namen[x.profiel_id]||'Medewerker'),maak('p',planDag(x.datum)+' | '+planStatus[x.status]+(x.van?' '+x.van.slice(0,5)+' - '+x.tot.slice(0,5):'')));el('plAvail').append(r)}
- if(!vr.length)el('plReq').textContent='Geen aanvragen.';
- for(const x of vr){const r=maak('div',undefined,'dienst');r.append(maak('strong',namen[x.profiel_id]||'Medewerker'),maak('p',planDag(x.datum)+' | '+planStatus[x.status]));if(x.status==='aangevraagd'){for(const st of ['goedgekeurd','afgewezen']){const b=maak('button',st==='goedgekeurd'?'Goedkeuren':'Afwijzen','klein');planAct(b,async()=>{if(!confirm('Aanvraag '+st+'?'))return;const result=planCheck(await db.from('planning_vrij').update({status:st}).eq('locatie_id',loc).eq('profiel_id',x.profiel_id).eq('datum',x.datum).eq('status','aangevraagd').select('status').single());await plLoad();el('plMsg').textContent='Aanvraag '+result.status+'. Controleer het rooster handmatig.'},'plMsg');r.append(b)}}el('plReq').append(r)}
+
 }
 el('plDeadForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const loc=huidigeLocatie,week=planWeek('plWeek');if(loc===null)throw Error('Kies een locatie.');planCheck(await db.from('planning_deadlines').upsert({locatie_id:loc,week_start:week,beschikbaar_tot:el('plBesch').value,vrij_tot:el('plVrij').value},{onConflict:'locatie_id,week_start'}).select('week_start').single());await plLoad();el('plMsg').textContent='Deadlines opgeslagen.'}catch(e){el('plMsg').textContent=e.message}finally{b.disabled=false}};
 el('plWeek').value=el('mpWeek').value=datumTekst(new Date());
@@ -412,10 +460,45 @@ const oudDash160=toonDashboard;toonDashboard=async function(){++mpGeneration;++p
 
 function mpTab(v){el('mpDays').hidden=v;el('mpAfw').hidden=!v;el('mpTabBesch').className=v?'secundair':'';el('mpTabVrij').className=v?'':'secundair';}
 el('mpTabBesch').onclick=()=>mpTab(false);el('mpTabVrij').onclick=()=>mpTab(true);
-el('mpAfwForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const loc=Number(el('mpLoc').value),van=el('afwVan').value,tot=el('afwTot').value;const {data:{user}}=await db.auth.getUser();if(!user||!loc||!van||!tot||tot<van||tot>verschuif(van,365))throw Error('Controleer locatie en periode (maximaal 366 dagen).');const rows=[];for(let d=van;d<=tot;d=verschuif(d,1))rows.push({locatie_id:loc,profiel_id:user.id,datum:d});if(!confirm('Vrij vragen voor '+rows.length+' dag(en)?'))return;planCheck(await db.from('planning_vrij').insert(rows).select('datum'));el('mpWeek').value=van;await mpLoad();el('mpMsg').textContent='Aanvraag ingediend. Je planner beoordeelt deze per dag.';}catch(err){el('mpMsg').textContent='Aanvraag niet opgeslagen: '+err.message+' (controleer deadline en bestaande aanvragen).';}finally{b.disabled=false}};
+el('mpAfwForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const loc=Number(el('mpLoc').value),van=el('afwVan').value,tot=el('afwTot').value;const {data:{user}}=await db.auth.getUser();if(!user||!loc||!van||!tot||tot<van||tot>verschuif(van,365))throw Error('Controleer locatie en periode (maximaal 366 dagen).');const rows=[];for(let d=van;d<=tot;d=verschuif(d,1))rows.push({locatie_id:loc,profiel_id:user.id,datum:d,soort:el('afwSoort').value});if(!confirm(afwSoortNaam(el('afwSoort').value)+' voor '+rows.length+' dag(en)?'))return;planCheck(await db.from('planning_vrij').insert(rows).select('datum'));el('mpWeek').value=van;await mpLoad();el('mpMsg').textContent='Aanvraag ingediend. Je planner beoordeelt deze per dag.';}catch(err){el('mpMsg').textContent='Aanvraag niet opgeslagen: '+err.message+' (controleer deadline en bestaande aanvragen).';}finally{b.disabled=false}};
 el('plStdForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const loc=huidigeLocatie;if(loc===null)throw Error('Kies een locatie.');planCheck(await db.from('planning_standaarden').upsert({locatie_id:loc,beschikbaar_weken:Number(el('plStdBesch').value),vrij_weken:Number(el('plStdVrij').value)},{onConflict:'locatie_id'}).select('locatie_id').single());await plLoad();el('plMsg').textContent='Standaard opgeslagen. Bestaande weekafwijkingen blijven gelden.';}catch(err){el('plMsg').textContent=err.message;}finally{b.disabled=false}};
+
+
+// Version 1.8.0: dedicated absence overview, with existing RLS.
+function afwSoortNaam(k){return ({vrij:'Vrij vragen',vakantie:'Vakantie',bijzonder:'Bijzonder verlof',overig:'Overig'})[k]||'Vrij vragen'}
+let paGen=0, raGen=0;
+el('paVan').value=maandag(datumTekst(new Date()));
+el('paTot').value=verschuif(el('paVan').value,90);
+async function paLoad(){
+ const gen=++paGen,loc=huidigeLocatie,van=el('paVan').value,tot=el('paTot').value;
+ const host=el('paList');host.replaceChildren();el('paCounts').textContent='';el('paMsg').textContent='Laden...';el('afwLocNaam').textContent=actiefPark()?.naam||'';
+ if(loc===null||!van||!tot||tot<van||tot>verschuif(van,366))throw Error('Kies een locatie en een periode van maximaal 367 dagen.');
+ const counters=await Promise.all(['aangevraagd','goedgekeurd','afgewezen'].map(status=>db.from('planning_vrij').select('datum',{count:'exact',head:true}).eq('locatie_id',loc).gte('datum',van).lte('datum',tot).eq('status',status)));
+ let q=db.from('planning_vrij').select('profiel_id,datum,status,soort',{count:'exact'}).eq('locatie_id',loc).gte('datum',van).lte('datum',tot).order('datum').order('profiel_id').limit(1000);
+ if(el('paStatus').value)q=q.eq('status',el('paStatus').value);if(el('paSoort').value)q=q.eq('soort',el('paSoort').value);
+ const r=await q;const rows=planCheck(r);if(gen!==paGen||String(loc)!==String(huidigeLocatie))return;
+ counters.forEach(planCheck);el('paCounts').textContent='In behandeling: '+counters[0].count+' | Goedgekeurd: '+counters[1].count+' | Afgewezen: '+counters[2].count+' (dagen in periode)';
+ const zoek=el('paNaam').value.trim().toLocaleLowerCase('nl');const visible=rows.filter(x=>!zoek||(namen[x.profiel_id]||'Medewerker').toLocaleLowerCase('nl').includes(zoek));
+ el('paMsg').textContent=visible.length+' dagaanvragen zichtbaar'+(r.count>rows.length?' (eerste '+rows.length+'; verklein de periode of filter)':'');
+ if(!visible.length)host.textContent='Geen aanvragen gevonden.';
+ for(const x of visible){const card=maak('div',undefined,'dienst');card.append(maak('strong',namen[x.profiel_id]||'Medewerker'),maak('p',planDag(x.datum)+' '+x.datum.slice(0,4)+' | '+afwSoortNaam(x.soort)+' | '+planStatus[x.status]));
+ if(x.status==='aangevraagd'){const kn=maak('div',undefined,'dienstknoppen');for(const st of ['goedgekeurd','afgewezen']){const b=maak('button',st==='goedgekeurd'?'Goedkeuren':'Afwijzen',st==='afgewezen'?'gevaar klein':'klein');planAct(b,async()=>{if(gen!==paGen||String(loc)!==String(huidigeLocatie))return;if(!confirm('Dagaanvraag '+st+'?'))return;planCheck(await db.from('planning_vrij').update({status:st}).eq('locatie_id',loc).eq('profiel_id',x.profiel_id).eq('datum',x.datum).eq('status','aangevraagd').select('status').single());await paLoad()},'paMsg');kn.append(b)}card.append(kn)}host.append(card)}
+}
+function paRefresh(){paLoad().catch(e=>el('paMsg').textContent=e.message)}
+for(const id of ['paVan','paTot','paStatus','paSoort','paNaam'])el(id).onchange=paRefresh;
+el('paLoad').onclick=paRefresh;
+const oudTab180=kiesTab;kiesTab=function(tab){++paGen;oudTab180(tab);el('afwPane').hidden=tab!=='afw';el('tabAfw').className=tab==='afw'?'':'secundair';if(tab==='afw')paRefresh();if(tab==='rooster')roosterAfwLoad()};
+el('tabAfw').onclick=()=>kiesTab('afw');
+const oudLoc180=el('locatieKeuze').onchange;el('locatieKeuze').onchange=async()=>{++paGen;el('paList').replaceChildren();await oudLoc180();if(!el('afwPane').hidden)paRefresh()};
+async function roosterAfwLoad(){const gen=++raGen,loc=huidigeLocatie,week=maandag(el('datum').value);const host=el('roosterAfw');host.replaceChildren();host.hidden=true;if(loc===null)return;try{const rows=planCheck(await db.from('planning_vrij').select('profiel_id,datum,soort').eq('locatie_id',loc).eq('status','goedgekeurd').gte('datum',week).lte('datum',verschuif(week,6)).order('datum').limit(1000));if(gen!==raGen||String(loc)!==String(huidigeLocatie)||week!==maandag(el('datum').value))return;if(rows.length){host.hidden=false;host.append(maak('strong','Goedgekeurde afwezigheid deze week'));for(const x of rows)host.append(maak('p',planDag(x.datum)+' | '+(namen[x.profiel_id]||'Medewerker')+' | '+afwSoortNaam(x.soort)));host.append(maak('small','Controleer eventuele bestaande diensten.'))}}catch(e){if(gen===raGen){host.hidden=false;host.textContent='Afwezigheid kon niet worden opgehaald: '+e.message}}}
+const oudWeek180=laadWeek;laadWeek=async function(){await oudWeek180();await roosterAfwLoad()};
+const oudDash180=toonDashboard;toonDashboard=async function(){++paGen;++raGen;el('paList').replaceChildren();el('afwPane').hidden=true;el('roosterAfw').hidden=true;await oudDash180()};
 
 toonDashboard().catch(e=>{el('login').hidden=false;el('dashboard').hidden=true;el('planner').hidden=true;el('werknemer').hidden=true;el('loginMelding').textContent='Fout: '+e.message});
 </script>
 </body>
 </html>
+
+
+
+
