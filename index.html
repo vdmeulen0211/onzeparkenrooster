@@ -149,7 +149,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.4';
+const RIVAME_VERSION = '4.0-alpha.5';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1219,13 +1219,21 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  const planner=document.getElementById('planner');
  const home=document.createElement('section');home.className='riv-shell-home';home.id='rivShellHome';home.hidden=true;dashboard.after(home);
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand">rivame<small>ALLES WERKT SAMEN</small></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.4</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand">rivame<small>ALLES WERKT SAMEN</small></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.5</div>';
  document.body.append(sidebar);
  const links=sidebar.querySelector('nav');
  const routes=[['home','⌂','Dashboard','Startpagina'],['rooster','▦','Rooster','Planning en diensten'],['medewerkers','♙','Medewerkers','Medewerkers per locatie'],['uren','◷','Mijn uren','Registratie en correcties'],['hr','♡','HR','Verlof en personeelsdossiers'],['bedrijf','▤','Bedrijf','Locaties en instellingen'],['support','?','Support','Hulp en informatie']];
  const employeeRoutes=[['home','⌂','Dashboard','Mijn overzicht'],['rooster','▦','Mijn rooster','Mijn diensten'],['uren','◷','Mijn uren','Uren en correcties'],['besch','✓','Beschikbaarheid','Beschikbaarheid doorgeven'],['vrij','♡','Verlof','Vrij vragen en afwezigheid'],['berichten','✉','Berichten','Mijn berichten'],['profiel','♙','Mijn profiel','Mijn gegevens']];
  let current='home';let pending=false;
  function accessible(){return !dashboard.hidden&&['planner','beheerder','medewerker'].includes(gebruikersRol)}
+ function closeOtherPages(){
+  // HR gebruikt inline pagina's die de planner via een body-class verbergen.
+  // Sluit deze eerst bij een overstap via het vaste zijmenu.
+  for(const page of document.querySelectorAll('.riv-hr-page:not([hidden])')){
+   if(typeof page.close==='function')page.close();else page.hidden=true;
+  }
+  if(!document.querySelector('.riv-hr-page:not([hidden])'))document.body.classList.remove('riv-hr-workspace');
+ }
  function navigate(key){
   if(!accessible())return;
   if(gebruikersRol==='medewerker'){
@@ -1238,6 +1246,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
    return;
   }
   if(key==='hr'){if(rivHRRoutes?.dashboard?.open)rivHRRoutes.dashboard.open();else showMessage('HR is voor dit account niet beschikbaar.');return}
+  closeOtherPages();
   if(key==='uren'){const target=[...document.querySelectorAll('#dashboard button')].find(b=>/urenregistratie/i.test(b.textContent)&&!b.hidden);if(target)target.click();else showMessage('Urenregistratie is voor dit account niet beschikbaar.');return}
   if(key==='support'){showMessage('Support wordt verder uitgebreid. Neem voor vragen contact op met je Rivame-beheerder.');return}
   if(key==='bedrijf'&&gebruikersRol!=='beheerder'){showMessage('Bedrijfsbeheer is alleen beschikbaar voor beheerders.');return}
