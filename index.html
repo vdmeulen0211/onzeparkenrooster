@@ -149,7 +149,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.6';
+const RIVAME_VERSION = '4.0-alpha.7';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -876,7 +876,7 @@ let rivSelected='',rivSelectedName='';
 const rivPersonTabs=[['dossier','Persoonsgegevens'],['contract','Arbeidscontracten'],['cert','Certificaten & diploma’s'],['vakantie','Verlof & vakantie'],['plus_min','Plus- en minuren (saldo)'],['ziek','Ziekmeldingen'],['onboarding','Onboarding'],['acceptaties','Reglementacceptaties']];
 function rivInlinePage(){const page=maak('section',undefined,'riv-hr-page');page.hidden=true;document.querySelector('.container').insertBefore(page,document.querySelector('footer'));Object.defineProperty(page,'open',{get:()=>!page.hidden});page.showModal=()=>{for(const p of document.querySelectorAll('.riv-hr-page'))if(p!==page&&p.open)p.close();page.hidden=false;document.body.classList.add('riv-hr-workspace');page.scrollIntoView({block:'start'})};page.close=()=>{if(page.hidden)return;page.hidden=true;page.dispatchEvent(new Event('close'));if(!document.querySelector('.riv-hr-page:not([hidden])'))document.body.classList.remove('riv-hr-workspace')};return page}
 function rivGo(key,dialog){const route=rivHRRoutes[key];if(!route)return;if(route.dialog!==dialog)dialog.close();route.open()}
-function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined,'riv-hr-nav');nav.setAttribute('aria-label','HR-menu');const person=rivPersonTabs.some(x=>x[0]===active);const tabs=[['dashboard','Dashboard'],['medewerkers','Medewerkers'],['contractweek','Plus- en minuren'],['rapportages','Rapportages'],['rulesHR','Reglementen'],['rechten','HR-instellingen']];for(const [key,label] of tabs){if(key==='rechten'&&gebruikersRol!=='beheerder')continue;const b=maak('button',label);b.type='button';if(key===active||key==='medewerkers'&&person)b.setAttribute('aria-current','page');b.onclick=()=>{if(key==='medewerkers'){rivSelected='';rivSelectedName=''}rivGo(key,dialog)};nav.append(b)}wrap.append(nav);if(person&&rivSelected){const head=maak('div',undefined,'riv-person-head');head.append(maak('h3',rivSelectedName||'Medewerker'));const sub=maak('nav',undefined,'riv-hr-nav riv-person-tabs');sub.setAttribute('aria-label','Medewerkersdossier');for(const [key,label] of rivPersonTabs){const b=maak('button',label);b.type='button';if(key===active)b.setAttribute('aria-current','page');b.onclick=()=>rivGo(key,dialog);sub.append(b)}wrap.append(head,sub)}return wrap}
+function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined,'riv-hr-nav');nav.setAttribute('aria-label','HR-menu');const person=rivPersonTabs.some(x=>x[0]===active);const tabs=[['dashboard','Dashboard'],['medewerkers','Medewerkers'],['urenbeheer','Urenregistratie'],['contractweek','Plus- en minuren'],['rapportages','Rapportages'],['rulesHR','Reglementen'],['rechten','HR-instellingen']];for(const [key,label] of tabs){if(key==='rechten'&&gebruikersRol!=='beheerder')continue;const b=maak('button',label);b.type='button';if(key===active||key==='medewerkers'&&person)b.setAttribute('aria-current','page');b.onclick=()=>{if(key==='medewerkers'){rivSelected='';rivSelectedName=''}rivGo(key,dialog)};nav.append(b)}wrap.append(nav);if(person&&rivSelected){const head=maak('div',undefined,'riv-person-head');head.append(maak('h3',rivSelectedName||'Medewerker'));const sub=maak('nav',undefined,'riv-hr-nav riv-person-tabs');sub.setAttribute('aria-label','Medewerkersdossier');for(const [key,label] of rivPersonTabs){const b=maak('button',label);b.type='button';if(key===active)b.setAttribute('aria-current','page');b.onclick=()=>rivGo(key,dialog);sub.append(b)}wrap.append(head,sub)}return wrap}
 // Rivame Personeelsadministratie 3.0-alpha.3
 (()=>{
  const button=maak('button','HR');button.type='button';button.hidden=true;button.style.marginTop='10px';el('dashboard').append(button);
@@ -1032,8 +1032,26 @@ function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined
  function close(){generation++;host.hidden=true;host.replaceChildren()}
  function reset(){authGen++;uid=null;hr=false;close();buttons.forEach(b=>b.hidden=true)}
  async function rights(){const g=++authGen;try{const u=get(await db.auth.getUser()).user;if(!u||g!==authGen)return;const h=get(await db.rpc('rivame_mag_hr'));if(g!==authGen)return;uid=u.id;hr=h===true;buttons[0].hidden=gebruikersRol==='medewerker';buttons[1].hidden=gebruikersRol!=='medewerker'}catch(e){console.warn('Urenregistratie:',e.message)}}
- function open(requested){if(!uid)return;mode=requested==='contract'&&hr?'contract':(gebruikersRol==='beheerder'||gebruikersRol==='planner'||hr?'manage':'own');host.hidden=false;draw();host.scrollIntoView({behavior:'smooth',block:'start'})}
+ function open(requested){if(!uid)return;mode=requested==='contract'&&hr?'contract':requested==='own'?'own':requested==='manage'&&(gebruikersRol==='beheerder'||gebruikersRol==='planner'||hr)?'manage':(gebruikersRol==='beheerder'||gebruikersRol==='planner'||hr?'manage':'own');host.hidden=false;draw().then(()=>{if(mode==='own'&&!host.hidden)showPersonalSummary().catch(e=>console.warn('Persoonlijk urenoverzicht:',e.message))});host.scrollIntoView({behavior:'smooth',block:'start'})}
+ async function showPersonalSummary(){
+  const owner=uid,body=host.querySelector('div:not(.weekrij):not(.menu)');if(!owner||mode!=='own'||!body)return;
+  for(const button of host.querySelectorAll('.menu button'))if(button.textContent==='Aanwezig & uren')button.hidden=true;
+  const panel=maak('section',undefined,'riv-own-summary');const heading=maak('h3','Mijn urenoverzicht');const filter=maak('label','Maand');const month=maak('input');month.type='month';month.value=period;filter.append(month);const cards=maak('div',undefined,'riv-own-stats');const tableHost=maak('div',undefined,'riv-own-table-wrap');panel.append(heading,filter,cards,tableHost);body.prepend(panel);
+  let request=0;const load=async()=>{const seq=++request;const chosen=month.value;if(!/^\d{4}-\d{2}$/.test(chosen))return;period=chosen;cards.textContent='Uren laden…';tableHost.replaceChildren();const end=new Date(Date.UTC(Number(chosen.slice(0,4)),Number(chosen.slice(5,7)),1)).toISOString().slice(0,10);try{
+   const rows=await all('rivame_urenoverzicht','id,werkdatum,begint_op,eindigt_op,pauze_seconden,netto_uren,status',q=>q.eq('profiel_id',owner).gte('werkdatum',chosen+'-01').lt('werkdatum',end),'werkdatum');
+   if(seq!==request||uid!==owner||host.hidden||mode!=='own')return;
+   const total=rows.reduce((sum,r)=>sum+Number(r.netto_uren||0),0);cards.replaceChildren();
+   for(const [value,label] of [[String(rows.length),'Geregistreerde diensten'],[total.toLocaleString('nl-NL',{maximumFractionDigits:2})+' uur','Totaal gewerkte uren'],[String(rows.filter(r=>r.status==='goedgekeurd').length),'Goedgekeurd']]){const card=maak('div',undefined,'riv-own-stat');card.append(maak('strong',value),maak('small',label));cards.append(card)}
+   const table=maak('table',undefined,'riv-own-table');const thead=maak('thead'),tr=maak('tr');for(const h of ['Datum','Begin','Einde','Pauze','Uren','Status'])tr.append(maak('th',h));thead.append(tr);table.append(thead);const tbody=maak('tbody');for(const r of rows){const tr=maak('tr');const date=r.werkdatum?new Date(r.werkdatum+'T12:00:00Z').toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}):'—';const time=t=>t?new Date(t).toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'}):'—';for(const value of [date,time(r.begint_op),time(r.eindigt_op),Math.round(Number(r.pauze_seconden||0)/60)+' min',hours(r.netto_uren),r.status||'—'])tr.append(maak('td',value));tbody.append(tr)}table.append(tbody);if(rows.length)tableHost.append(table);else tableHost.append(maak('p','Geen geregistreerde diensten in deze maand.','subtiel'));
+  }catch(e){if(seq===request&&uid===owner)cards.textContent='Overzicht niet beschikbaar: '+(e.message||String(e))}};
+  month.onchange=load;await load();
+ }
+ host.id='rivameClockPanel';
+ window.rivameOpenMijnUren=()=>open('own');
+ window.rivameOpenUrenBeheer=()=>open('manage');
+ window.rivameSluitUren=close;
  rivHRRoutes.contractweek={dialog:null,open:()=>open('contract')};
+ rivHRRoutes.urenbeheer={dialog:null,open:()=>open('manage')};
  async function draw(){const g=++generation,owner=uid;host.replaceChildren();const valid=()=>g===generation&&owner===uid&&!host.hidden;const title=maak('div',undefined,'weekrij');title.append(maak('h2',mode==='contract'?'HR · Plus- en minuren':(mode==='own'||mode==='contractmine'?'Mijn uren':'Urenregistratie')),btn('Sluiten',close));host.append(title);const nav=maak('div',undefined,'menu');for(const [key,label] of [['own','Mijn uren'],...((gebruikersRol==='beheerder'||gebruikersRol==='planner'||hr)?[['manage','Aanwezig & uren']]:[]),['contractmine','Mijn plus- en minuren'],...(hr?[['contract','Plus- en minuren (HR)']]:[]),...(gebruikersRol==='beheerder'?[['settings','Instellingen']]:[])])nav.append(btn(label,()=>{mode=key;draw()}));host.append(nav);if(mode==='contract'&&hr)host.append(btn('Terug naar HR',()=>{close();rivHRRoutes.dashboard.open()}));const msg=maak('p','Laden…','subtiel');msg.setAttribute('role','status');const body=maak('div');host.append(msg,body);const run=fn=>async(ev)=>{if(busy||!valid())return;const target=ev?.currentTarget,area=target?.closest('details');let notice=area?.querySelector('.riv-clock-msg');if(area&&!notice){notice=maak('p','','riv-clock-msg');notice.setAttribute('role','status');area.append(notice)}busy=true;if(target?.tagName==='BUTTON')target.disabled=true;msg.textContent='Bezig…';if(notice)notice.textContent='Bezig…';try{await fn();if(valid()){await draw();if(!host.hidden)host.querySelector('[role=status]')?.replaceChildren('Opgeslagen.')}}catch(e){if(valid()){const error=e.message||String(e);msg.textContent=error;msg.className='fout';if(notice){notice.textContent=error;notice.classList.add('fout')}}}finally{busy=false;if(target?.tagName==='BUTTON')target.disabled=false}};
  try{const [locs,inst]=await Promise.all([all('locaties','id,naam,actief',q=>q.eq('actief',true)),all('rivame_klok_instellingen','*',null,'locatie_id')]);if(!valid())return;const settings=new Map(inst.map(x=>[String(x.locatie_id),x]));const name=id=>locs.find(x=>String(x.id)===String(id))?.naam||'Locatie '+id;msg.textContent='';
  if(mode==='settings'){for(const l of locs){const row=maak('div',undefined,'dienst');row.append(maak('h3',l.naam));const check=(label,val)=>{const x=maak('input');x.type='checkbox';x.style.width='auto';x.checked=!!val;const lab=maak('label',label+' ');lab.append(x);row.append(lab);return x};const s=settings.get(String(l.id));const fields=[['actief','Inklokken actief'],['tablet_actief','Personeelstablet actief'],['pauze_actief','Pauze starten en stoppen'],['eigen_begin_wijzigen','Zelf begintijd wijzigen'],['eigen_eind_wijzigen','Zelf eindtijd wijzigen'],['eigen_pauze_wijzigen','Zelf pauzeduur wijzigen'],['warme_maaltijd_actief','Warme maaltijd'],['koude_maaltijd_actief','Koude maaltijd']];const controls=fields.map(([key,label])=>[key,check(label,s?.[key])]);row.append(btn('Opslaan',run(async()=>{const values=Object.fromEntries(controls.map(([key,input])=>[key,input.checked]));get(await db.from('rivame_klok_instellingen').upsert({locatie_id:l.id,...values,maaltijden_actief:values.warme_maaltijd_actief||values.koude_maaltijd_actief}).select('locatie_id'))})));const link=maak('a','Open personeelstablet');link.href='tablet.html?loc='+encodeURIComponent(l.id);link.target='_blank';link.rel='noopener noreferrer';row.append(link);body.append(row)}return}
@@ -1205,11 +1223,17 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
 .riv-shell-notice{background:white;border:1px solid #dce9df;padding:22px 24px;border-radius:17px}.riv-shell-notice h3{margin:0 0 9px;color:#173d2d}.riv-shell-notice p{margin:0;color:#526b5a}
 .riv-new-shell #planner>.menu{display:none}.riv-new-shell #planner{display:block}.riv-new-shell #planner[hidden]{display:none!important}
 .riv-new-shell.riv-shell-at-home #planner{display:none!important}.riv-new-shell:not(.riv-shell-at-home) .riv-shell-home{display:none!important}
+.riv-new-shell.riv-shell-hours .riv-shell-home{display:none!important}
+.riv-own-summary{border:1px solid #dce9df;border-radius:15px;padding:18px;background:#fff;margin:14px 0 24px}
+.riv-own-summary h3{font-size:19px;margin:0 0 8px}.riv-own-summary label{max-width:220px}.riv-own-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.riv-own-stat{border:1px solid #e2ebe4;background:#f4f9f5;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:4px}.riv-own-stat strong{font-size:21px;color:#174832}.riv-own-stat small{color:#506d59;font-size:12px}
+.riv-own-table-wrap{overflow:auto}.riv-own-table{width:100%;border-collapse:collapse;font-size:13px;min-width:580px}.riv-own-table th{text-align:left;background:#edf5ef;color:#194b33}.riv-own-table th,.riv-own-table td{padding:10px;border-bottom:1px solid #e2ebe4;white-space:nowrap}
 .riv-new-shell.opr25employee>.container{max-width:1500px;padding-left:270px}
 .riv-new-shell.opr25employee #nav25{display:none!important}
 .riv-new-shell.opr25employee.riv-shell-at-home #home25{display:none!important}
 .riv-new-shell.opr25employee #dashboard>button{display:none!important}
 .riv-mobile-toggle,.riv-mobile-backdrop{display:none!important}
+.riv-mobile-logo{display:flex;align-items:center;gap:9px}.riv-mobile-logo svg{width:34px;height:34px;flex:none}.riv-mobile-logo strong{font-size:22px;letter-spacing:-.9px;font-weight:800;color:#123543}
 @media(max-width:1050px){.riv-shell-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:750px){
  .riv-new-shell{background:#f7f9f7!important}
@@ -1221,7 +1245,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  .riv-shell-brand,.riv-shell-foot{display:none}
  .riv-shell-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
  .riv-new-shell .riv-shell-links button:not(.gevaar){display:flex;flex-direction:row;align-items:center;gap:9px;text-align:left;padding:12px;font-size:14px;background:#f0f5f1!important;color:#174c34!important}
- .riv-new-shell .riv-shell-links button[aria-current=page],.riv-new-shell .riv-shell-links button:hover{background:#dceee2!important;color:#0f5434!important}
+ .riv-new-shell .riv-shell-links button[aria-current=page],.riv-new-shell .riv-shell-links button:hover{background:#d8f3ee!important;color:#0f5549!important;box-shadow:inset 3px 0 #20b8a2}
  .riv-shell-links .riv-shell-icon{font-size:21px}
  .riv-new-shell .riv-mobile-backdrop{display:none!important}
  .riv-new-shell.riv-mobile-menu-open .riv-mobile-backdrop{display:block!important;position:fixed;inset:62px 0 0;z-index:48;background:#132b1c55!important;border-radius:0!important}
@@ -1241,6 +1265,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  .riv-shell-tile strong{font-size:15px;line-height:1.3}
  .riv-shell-tile small{font-size:12px;line-height:1.3}
  .riv-shell-notice{padding:15px;border-radius:13px}.riv-shell-notice h3{font-size:15px}
+ .riv-own-summary{padding:13px}.riv-own-stats{gap:6px}.riv-own-stat{padding:10px}.riv-own-stat strong{font-size:16px}.riv-own-stat small{font-size:10px}
 }
 </style>
 <script>
@@ -1250,9 +1275,9 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  const planner=document.getElementById('planner');
  const home=document.createElement('section');home.className='riv-shell-home';home.id='rivShellHome';home.hidden=true;dashboard.after(home);
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand">rivame<small>ALLES WERKT SAMEN</small></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.6</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand">rivame<small>ALLES WERKT SAMEN</small></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.7</div>';
  document.body.append(sidebar);
- const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<span>rivame</span><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
+ const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
  function closeMobileMenu(){document.body.classList.remove('riv-mobile-menu-open');mobileToggle.setAttribute('aria-expanded','false');mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.querySelector('span:last-child').textContent='☰'}
  mobileToggle.onclick=()=>{const open=!document.body.classList.contains('riv-mobile-menu-open');document.body.classList.toggle('riv-mobile-menu-open',open);mobileToggle.setAttribute('aria-expanded',String(open));mobileToggle.setAttribute('aria-label',open?'Menu sluiten':'Menu openen');mobileToggle.querySelector('span:last-child').textContent=open?'×':'☰'};
@@ -1273,27 +1298,33 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  function navigate(key){
   if(!accessible())return;
   closeMobileMenu();
-  if(gebruikersRol==='medewerker'){
-   if(key==='uren'){const target=[...document.querySelectorAll('#dashboard button')].find(b=>/urenregistratie/i.test(b.textContent));if(target)target.click();else showMessage('Mijn uren is niet beschikbaar.');return}
-   if(key==='berichten'){page25('berichten');return}
-   if(key!=='home')page25(key);
-   else page25('home');
-   current=key;document.body.classList.toggle('riv-shell-at-home',key==='home');
-   links.querySelectorAll('button').forEach(b=>{if(b.dataset.route===key)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  if(key!=='uren'){document.body.classList.remove('riv-shell-hours');window.rivameSluitUren?.()}
+  const selectRoute=route=>{current=route;links.querySelectorAll('button').forEach(b=>{if(b.dataset.route===route)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')})};
+  if(key==='uren'){
+   closeOtherPages();
+   document.body.classList.add('riv-shell-at-home','riv-shell-hours');
+   if(gebruikersRol==='medewerker')page25('home');
+   if(typeof window.rivameOpenMijnUren==='function'){window.rivameOpenMijnUren();selectRoute('uren')}
+   else showMessage('Mijn uren is momenteel niet beschikbaar.');
    return;
   }
-  if(key==='hr'){if(rivHRRoutes?.dashboard?.open)rivHRRoutes.dashboard.open();else showMessage('HR is voor dit account niet beschikbaar.');return}
+  if(gebruikersRol==='medewerker'){
+   if(key==='berichten'){page25('berichten');selectRoute('berichten');return}
+   if(key!=='home')page25(key);
+   else page25('home');
+   selectRoute(key);document.body.classList.toggle('riv-shell-at-home',key==='home');
+   return;
+  }
+  if(key==='hr'){if(rivHRRoutes?.dashboard?.open){selectRoute('hr');rivHRRoutes.dashboard.open()}else showMessage('HR is voor dit account niet beschikbaar.');return}
   closeOtherPages();
-  if(key==='uren'){const target=[...document.querySelectorAll('#dashboard button')].find(b=>/urenregistratie/i.test(b.textContent)&&!b.hidden);if(target)target.click();else showMessage('Urenregistratie is voor dit account niet beschikbaar.');return}
   if(key==='support'){showMessage('Support wordt verder uitgebreid. Neem voor vragen contact op met je Rivame-beheerder.');return}
   if(key==='bedrijf'&&gebruikersRol!=='beheerder'){showMessage('Bedrijfsbeheer is alleen beschikbaar voor beheerders.');return}
-  current=key;document.body.classList.toggle('riv-shell-at-home',key==='home');
+  selectRoute(key);document.body.classList.toggle('riv-shell-at-home',key==='home');
   if(key!=='home'){
    planner.hidden=false;
    const tab={rooster:'tabRooster',medewerkers:'tabMedewerkers',bedrijf:'tabBeheer'}[key];
    document.getElementById(tab)?.click();
   }
-  links.querySelectorAll('button').forEach(b=>{if(b.dataset.route===key)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   window.scrollTo({top:0,behavior:'instant'});
  }
  function showMessage(message){const notice=home.querySelector('#rivShellNoticeText');if(notice)notice.textContent=message;navigate('home')}
