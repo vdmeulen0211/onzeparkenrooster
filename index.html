@@ -149,7 +149,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.3';
+const RIVAME_VERSION = '4.0-alpha.4';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1187,20 +1187,30 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
 .riv-new-shell #dashboard{border:0;box-shadow:none;background:transparent;padding:0;margin:0 0 20px}
 .riv-new-shell #dashboard>.weekrij{background:#fff;border:1px solid #dce9df;border-radius:16px;padding:15px 20px}
 .riv-new-shell #dashboard>.weekrij #welkom{font-size:23px;color:#123f2d}
+.riv-new-shell #dashboard>button{display:none!important}
 .riv-shell-sidebar{position:fixed;inset:0 auto 0 0;width:234px;box-sizing:border-box;z-index:20;padding:28px 15px;background:#123f2d;color:white;display:flex;flex-direction:column;gap:18px;box-shadow:7px 0 24px #143c2812}
 .riv-shell-brand{font-size:30px;font-weight:800;letter-spacing:-1.5px;padding:0 13px}.riv-shell-brand small{display:block;font-size:11px;font-weight:400;letter-spacing:1px;color:#b6d8c6;margin-top:1px}
 .riv-shell-links{display:grid;gap:6px}.riv-shell-links button{width:100%;padding:13px 14px;background:transparent;color:#deeee4;text-align:left;border:0;border-radius:12px;display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600;box-shadow:none}
 .riv-shell-links button:hover,.riv-shell-links button[aria-current=page]{background:#28734e;color:#fff}.riv-shell-links .riv-shell-icon{font-size:20px;width:25px;text-align:center}
+.riv-new-shell .riv-shell-links button:not(.gevaar){background:transparent!important;color:#e7f5ea!important}
+.riv-new-shell .riv-shell-links button:hover,.riv-new-shell .riv-shell-links button[aria-current=page]{background:#28734e!important;color:white!important}
 .riv-shell-foot{margin-top:auto;padding:12px;color:#c0dcca;font-size:12px;border-top:1px solid #ffffff27}
 .riv-shell-home{display:grid;gap:20px}.riv-shell-intro{background:linear-gradient(120deg,#1b6847,#26865b);color:white;padding:28px 30px;border-radius:20px}.riv-shell-intro h2{margin:0 0 9px;color:white;font-size:29px}.riv-shell-intro p{margin:0;color:#e3f6e9}
 .riv-shell-heading{font-size:20px;color:#173d2d;margin:5px 0 0}.riv-shell-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
 .riv-shell-tile{min-height:155px;padding:22px;border:1px solid #dce9df;border-radius:17px;background:#fff;color:#173d2d;box-shadow:0 5px 20px #19472d09;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:9px;transition:transform .14s,border-color .14s}
 .riv-shell-tile:hover{transform:translateY(-2px);border-color:#66b68a}.riv-shell-tile .riv-shell-tileicon{font-size:28px;background:#e4f3e9;border-radius:12px;padding:7px 10px}.riv-shell-tile strong{font-size:17px}.riv-shell-tile small{font-size:13px;color:#62776b}
+.riv-new-shell button.riv-shell-tile,.riv-new-shell button.riv-shell-tile:not(.secundair):not(.gevaar){background:#fff!important;color:#173d2d!important;border:1px solid #dce9df!important}
+.riv-new-shell button.riv-shell-tile:hover{background:#f3fbf6!important;border-color:#65b58b!important}
+.riv-new-shell button.riv-shell-tile small{color:#546b5d!important}.riv-new-shell .riv-shell-tileicon{color:#14573b!important}
 .riv-shell-notice{background:white;border:1px solid #dce9df;padding:22px 24px;border-radius:17px}.riv-shell-notice h3{margin:0 0 9px;color:#173d2d}.riv-shell-notice p{margin:0;color:#526b5a}
 .riv-new-shell #planner>.menu{display:none}.riv-new-shell #planner{display:block}.riv-new-shell #planner[hidden]{display:none!important}
 .riv-new-shell.riv-shell-at-home #planner{display:none!important}.riv-new-shell:not(.riv-shell-at-home) .riv-shell-home{display:none!important}
+.riv-new-shell.opr25employee>.container{max-width:1500px;padding-left:270px}
+.riv-new-shell.opr25employee #nav25{display:none!important}
+.riv-new-shell.opr25employee.riv-shell-at-home #home25{display:none!important}
+.riv-new-shell.opr25employee #dashboard>button{display:none!important}
 @media(max-width:1050px){.riv-shell-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:750px){.riv-new-shell>.container{padding:16px 13px 100px}.riv-shell-sidebar{inset:auto 0 0;width:100%;height:auto;padding:8px 6px;box-shadow:0 -4px 18px #143c2820}.riv-shell-brand,.riv-shell-foot{display:none}.riv-shell-links{display:flex;gap:1px;justify-content:space-around}.riv-shell-links button{display:flex;flex:1;flex-direction:column;align-items:center;font-size:10px;gap:1px;padding:7px 2px}.riv-shell-links .riv-shell-icon{font-size:20px}.riv-shell-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.riv-shell-tile{min-height:125px;padding:14px}.riv-shell-intro{padding:21px}.riv-shell-intro h2{font-size:23px}.riv-shell-notice{padding:17px}}
+@media(max-width:750px){.riv-new-shell>.container,.riv-new-shell.opr25employee>.container{padding:16px 13px 100px;max-width:none}.riv-shell-sidebar{inset:auto 0 0;width:100%;height:auto;padding:8px 6px;box-shadow:0 -4px 18px #143c2820}.riv-shell-brand,.riv-shell-foot{display:none}.riv-shell-links{display:flex;gap:1px;justify-content:space-around}.riv-shell-links button{display:flex;flex:1;flex-direction:column;align-items:center;font-size:10px;gap:1px;padding:7px 2px}.riv-shell-links .riv-shell-icon{font-size:20px}.riv-shell-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.riv-shell-tile{min-height:125px;padding:14px}.riv-shell-intro{padding:21px}.riv-shell-intro h2{font-size:23px}.riv-shell-notice{padding:17px}}
 </style>
 <script>
 // Alleen een nieuwe weergave; de bestaande rechten, gegevens en acties blijven leidend.
@@ -1209,16 +1219,26 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  const planner=document.getElementById('planner');
  const home=document.createElement('section');home.className='riv-shell-home';home.id='rivShellHome';home.hidden=true;dashboard.after(home);
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand">rivame<small>ALLES WERKT SAMEN</small></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.3</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand">rivame<small>ALLES WERKT SAMEN</small></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.4</div>';
  document.body.append(sidebar);
  const links=sidebar.querySelector('nav');
  const routes=[['home','⌂','Dashboard','Startpagina'],['rooster','▦','Rooster','Planning en diensten'],['medewerkers','♙','Medewerkers','Medewerkers per locatie'],['uren','◷','Mijn uren','Registratie en correcties'],['hr','♡','HR','Verlof en personeelsdossiers'],['bedrijf','▤','Bedrijf','Locaties en instellingen'],['support','?','Support','Hulp en informatie']];
+ const employeeRoutes=[['home','⌂','Dashboard','Mijn overzicht'],['rooster','▦','Mijn rooster','Mijn diensten'],['uren','◷','Mijn uren','Uren en correcties'],['besch','✓','Beschikbaarheid','Beschikbaarheid doorgeven'],['vrij','♡','Verlof','Vrij vragen en afwezigheid'],['berichten','✉','Berichten','Mijn berichten'],['profiel','♙','Mijn profiel','Mijn gegevens']];
  let current='home';let pending=false;
- function accessible(){return !dashboard.hidden&&['planner','beheerder'].includes(window.gebruikersRol||gebruikersRol)}
+ function accessible(){return !dashboard.hidden&&['planner','beheerder','medewerker'].includes(gebruikersRol)}
  function navigate(key){
   if(!accessible())return;
+  if(gebruikersRol==='medewerker'){
+   if(key==='uren'){const target=[...document.querySelectorAll('#dashboard button')].find(b=>/urenregistratie/i.test(b.textContent));if(target)target.click();else showMessage('Mijn uren is niet beschikbaar.');return}
+   if(key==='berichten'){page25('berichten');return}
+   if(key!=='home')page25(key);
+   else page25('home');
+   current=key;document.body.classList.toggle('riv-shell-at-home',key==='home');
+   links.querySelectorAll('button').forEach(b=>{if(b.dataset.route===key)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+   return;
+  }
   if(key==='hr'){if(rivHRRoutes?.dashboard?.open)rivHRRoutes.dashboard.open();else showMessage('HR is voor dit account niet beschikbaar.');return}
-  if(key==='uren'){const btn=document.querySelector('#dashboard button:not([hidden])');const target=[...document.querySelectorAll('#dashboard button')].find(b=>/urenregistratie/i.test(b.textContent)&&!b.hidden);if(target)target.click();else showMessage('Urenregistratie is voor dit account niet beschikbaar.');return}
+  if(key==='uren'){const target=[...document.querySelectorAll('#dashboard button')].find(b=>/urenregistratie/i.test(b.textContent)&&!b.hidden);if(target)target.click();else showMessage('Urenregistratie is voor dit account niet beschikbaar.');return}
   if(key==='support'){showMessage('Support wordt verder uitgebreid. Neem voor vragen contact op met je Rivame-beheerder.');return}
   if(key==='bedrijf'&&gebruikersRol!=='beheerder'){showMessage('Bedrijfsbeheer is alleen beschikbaar voor beheerders.');return}
   current=key;document.body.classList.toggle('riv-shell-at-home',key==='home');
@@ -1236,11 +1256,12 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
   const on=accessible();document.body.classList.toggle('riv-new-shell',on);sidebar.hidden=!on;home.hidden=!on;
   if(!on){document.body.classList.remove('riv-shell-at-home');return}
   links.replaceChildren();
-  for(const [key,icon,label] of routes){if(key==='bedrijf'&&gebruikersRol!=='beheerder')continue;const b=document.createElement('button');b.type='button';b.dataset.route=key;b.innerHTML='<span class="riv-shell-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span>';b.onclick=()=>navigate(key);links.append(b)}
+  const available=gebruikersRol==='medewerker'?employeeRoutes:routes.filter(x=>x[0]!=='bedrijf'||gebruikersRol==='beheerder');
+  for(const [key,icon,label] of available){const b=document.createElement('button');b.type='button';b.dataset.route=key;b.innerHTML='<span class="riv-shell-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span>';b.onclick=()=>navigate(key);links.append(b)}
   home.replaceChildren();const intro=document.createElement('div');intro.className='riv-shell-intro';const naam=document.getElementById('welkom').textContent.replace(/^Welkom,\s*/,'');intro.innerHTML='<h2>Goedemorgen, <span></span>!</h2><p>Alles voor je personeel en planning, overzichtelijk op één plek.</p>';intro.querySelector('span').textContent=naam;home.append(intro);
   const heading=document.createElement('h2');heading.className='riv-shell-heading';heading.textContent='Waar wil je naartoe?';home.append(heading);
-  const grid=document.createElement('div');grid.className='riv-shell-grid';for(const [key,icon,label,subtitle] of routes.slice(1)){if(key==='bedrijf'&&gebruikersRol!=='beheerder')continue;const b=document.createElement('button');b.type='button';b.className='riv-shell-tile';b.innerHTML='<span class="riv-shell-tileicon" aria-hidden="true">'+icon+'</span><strong>'+label+'</strong><small>'+subtitle+'</small>';b.onclick=()=>navigate(key);grid.append(b)}home.append(grid);
-  const notice=document.createElement('div');notice.className='riv-shell-notice';notice.innerHTML='<h3>Wat vraagt aandacht?</h3><p id="rivShellNoticeText">Open het rooster, HR of Mijn uren om de actuele meldingen en aanvragen te bekijken.</p>';home.append(notice);
+  const grid=document.createElement('div');grid.className='riv-shell-grid';for(const [key,icon,label,subtitle] of available.slice(1)){const b=document.createElement('button');b.type='button';b.className='riv-shell-tile';b.innerHTML='<span class="riv-shell-tileicon" aria-hidden="true">'+icon+'</span><strong>'+label+'</strong><small>'+subtitle+'</small>';b.onclick=()=>navigate(key);grid.append(b)}home.append(grid);
+  const notice=document.createElement('div');notice.className='riv-shell-notice';notice.innerHTML='<h3>Wat vraagt aandacht?</h3><p id="rivShellNoticeText"></p>';notice.querySelector('p').textContent=gebruikersRol==='medewerker'?'Bekijk je komende dienst, berichten en verlofaanvragen via de tegels hierboven.':'Open het rooster, HR of Mijn uren om de actuele meldingen en aanvragen te bekijken.';home.append(notice);
   navigate('home');
  }
  // Auth kan door eerdere modules async worden bijgewerkt; observer kijkt alleen naar zichtbaarheid.
