@@ -149,7 +149,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.5';
+const RIVAME_VERSION = '4.0-alpha.6';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1209,8 +1209,39 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
 .riv-new-shell.opr25employee #nav25{display:none!important}
 .riv-new-shell.opr25employee.riv-shell-at-home #home25{display:none!important}
 .riv-new-shell.opr25employee #dashboard>button{display:none!important}
+.riv-mobile-toggle,.riv-mobile-backdrop{display:none!important}
 @media(max-width:1050px){.riv-shell-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:750px){.riv-new-shell>.container,.riv-new-shell.opr25employee>.container{padding:16px 13px 100px;max-width:none}.riv-shell-sidebar{inset:auto 0 0;width:100%;height:auto;padding:8px 6px;box-shadow:0 -4px 18px #143c2820}.riv-shell-brand,.riv-shell-foot{display:none}.riv-shell-links{display:flex;gap:1px;justify-content:space-around}.riv-shell-links button{display:flex;flex:1;flex-direction:column;align-items:center;font-size:10px;gap:1px;padding:7px 2px}.riv-shell-links .riv-shell-icon{font-size:20px}.riv-shell-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.riv-shell-tile{min-height:125px;padding:14px}.riv-shell-intro{padding:21px}.riv-shell-intro h2{font-size:23px}.riv-shell-notice{padding:17px}}
+@media(max-width:750px){
+ .riv-new-shell{background:#f7f9f7!important}
+ .riv-new-shell>.container,.riv-new-shell.opr25employee>.container{padding:76px 14px 22px;max-width:none}
+ .riv-new-shell .riv-mobile-toggle{display:flex!important;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;z-index:50;width:100%;height:62px;padding:8px 18px;background:#fff!important;color:#164832!important;border-radius:0!important;border-bottom:1px solid #e1e9e2!important;box-shadow:0 3px 12px #183d2910;font-size:20px;font-weight:800}
+ .riv-mobile-toggle span:last-child{font-size:26px;font-weight:500}
+ .riv-shell-sidebar{display:none;inset:62px 0 auto;width:100%;height:auto;max-height:calc(100dvh - 62px);overflow:auto;padding:12px 16px 22px;box-shadow:0 14px 24px #15352525;background:#fff;color:#164832;z-index:49;border-radius:0 0 18px 18px}
+ .riv-new-shell.riv-mobile-menu-open .riv-shell-sidebar{display:flex!important}
+ .riv-shell-brand,.riv-shell-foot{display:none}
+ .riv-shell-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .riv-new-shell .riv-shell-links button:not(.gevaar){display:flex;flex-direction:row;align-items:center;gap:9px;text-align:left;padding:12px;font-size:14px;background:#f0f5f1!important;color:#174c34!important}
+ .riv-new-shell .riv-shell-links button[aria-current=page],.riv-new-shell .riv-shell-links button:hover{background:#dceee2!important;color:#0f5434!important}
+ .riv-shell-links .riv-shell-icon{font-size:21px}
+ .riv-new-shell .riv-mobile-backdrop{display:none!important}
+ .riv-new-shell.riv-mobile-menu-open .riv-mobile-backdrop{display:block!important;position:fixed;inset:62px 0 0;z-index:48;background:#132b1c55!important;border-radius:0!important}
+ .riv-new-shell #dashboard{margin-bottom:11px}
+ .riv-new-shell #dashboard>.weekrij{padding:11px 14px;gap:8px;border-radius:12px}
+ .riv-new-shell #dashboard>.weekrij #welkom{font-size:17px}
+ .riv-new-shell #dashboard>.weekrij .subtiel{font-size:12px}
+ .riv-new-shell #dashboard #logout{padding:6px 9px;font-size:12px;min-height:32px}
+ .riv-shell-home{gap:12px}
+ .riv-shell-intro{padding:15px 17px;background:#e9f3eb;color:#184a33;border:1px solid #d7e8db;border-radius:13px}
+ .riv-shell-intro h2{font-size:19px!important;line-height:1.25;color:#174b33!important;margin-bottom:4px}
+ .riv-shell-intro p{font-size:13px;color:#476654!important}
+ .riv-shell-heading{font-size:18px;margin:2px 0}
+ .riv-shell-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .riv-new-shell button.riv-shell-tile{min-height:108px;padding:14px!important;gap:5px;border-radius:13px}
+ .riv-shell-tile .riv-shell-tileicon{font-size:21px;padding:5px 8px;border-radius:9px}
+ .riv-shell-tile strong{font-size:15px;line-height:1.3}
+ .riv-shell-tile small{font-size:12px;line-height:1.3}
+ .riv-shell-notice{padding:15px;border-radius:13px}.riv-shell-notice h3{font-size:15px}
+}
 </style>
 <script>
 // Alleen een nieuwe weergave; de bestaande rechten, gegevens en acties blijven leidend.
@@ -1219,8 +1250,13 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  const planner=document.getElementById('planner');
  const home=document.createElement('section');home.className='riv-shell-home';home.id='rivShellHome';home.hidden=true;dashboard.after(home);
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand">rivame<small>ALLES WERKT SAMEN</small></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.5</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand">rivame<small>ALLES WERKT SAMEN</small></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.6</div>';
  document.body.append(sidebar);
+ const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<span>rivame</span><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
+ const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
+ function closeMobileMenu(){document.body.classList.remove('riv-mobile-menu-open');mobileToggle.setAttribute('aria-expanded','false');mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.querySelector('span:last-child').textContent='☰'}
+ mobileToggle.onclick=()=>{const open=!document.body.classList.contains('riv-mobile-menu-open');document.body.classList.toggle('riv-mobile-menu-open',open);mobileToggle.setAttribute('aria-expanded',String(open));mobileToggle.setAttribute('aria-label',open?'Menu sluiten':'Menu openen');mobileToggle.querySelector('span:last-child').textContent=open?'×':'☰'};
+ backdrop.onclick=closeMobileMenu;
  const links=sidebar.querySelector('nav');
  const routes=[['home','⌂','Dashboard','Startpagina'],['rooster','▦','Rooster','Planning en diensten'],['medewerkers','♙','Medewerkers','Medewerkers per locatie'],['uren','◷','Mijn uren','Registratie en correcties'],['hr','♡','HR','Verlof en personeelsdossiers'],['bedrijf','▤','Bedrijf','Locaties en instellingen'],['support','?','Support','Hulp en informatie']];
  const employeeRoutes=[['home','⌂','Dashboard','Mijn overzicht'],['rooster','▦','Mijn rooster','Mijn diensten'],['uren','◷','Mijn uren','Uren en correcties'],['besch','✓','Beschikbaarheid','Beschikbaarheid doorgeven'],['vrij','♡','Verlof','Vrij vragen en afwezigheid'],['berichten','✉','Berichten','Mijn berichten'],['profiel','♙','Mijn profiel','Mijn gegevens']];
@@ -1236,6 +1272,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  }
  function navigate(key){
   if(!accessible())return;
+  closeMobileMenu();
   if(gebruikersRol==='medewerker'){
    if(key==='uren'){const target=[...document.querySelectorAll('#dashboard button')].find(b=>/urenregistratie/i.test(b.textContent));if(target)target.click();else showMessage('Mijn uren is niet beschikbaar.');return}
    if(key==='berichten'){page25('berichten');return}
@@ -1262,8 +1299,8 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  function showMessage(message){const notice=home.querySelector('#rivShellNoticeText');if(notice)notice.textContent=message;navigate('home')}
  function refresh(){
   if(pending)return;
-  const on=accessible();document.body.classList.toggle('riv-new-shell',on);sidebar.hidden=!on;home.hidden=!on;
-  if(!on){document.body.classList.remove('riv-shell-at-home');return}
+  const on=accessible();document.body.classList.toggle('riv-new-shell',on);sidebar.hidden=!on;home.hidden=!on;mobileToggle.hidden=!on;backdrop.hidden=!on;
+  if(!on){closeMobileMenu();document.body.classList.remove('riv-shell-at-home');return}
   links.replaceChildren();
   const available=gebruikersRol==='medewerker'?employeeRoutes:routes.filter(x=>x[0]!=='bedrijf'||gebruikersRol==='beheerder');
   for(const [key,icon,label] of available){const b=document.createElement('button');b.type='button';b.dataset.route=key;b.innerHTML='<span class="riv-shell-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span>';b.onclick=()=>navigate(key);links.append(b)}
