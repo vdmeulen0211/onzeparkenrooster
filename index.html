@@ -47,7 +47,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 .riv-hr-page{margin:14px 0;padding:20px;background:white;border-radius:15px;min-width:0;overflow-wrap:anywhere}.riv-hr-page[hidden]{display:none!important}.riv-hr-workspace>.container>section:not(#dashboard):not(.riv-hr-page),.riv-hr-workspace>.container>#planner,.riv-hr-workspace>.container>#nav25{display:none!important}.riv-person-list{display:grid;gap:7px;margin:12px 0}.riv-person-list button{text-align:left;background:#e7eff1!important;color:#123543!important}.riv-person-list button[aria-current=page]{background:#167d72!important;color:white!important}.riv-person-tabs{border-top:1px solid #dce5e8;padding-top:12px}.riv-hr-page .riv-hr-nav{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}.riv-hr-page select.riv-hidden-picker{display:none!important}.riv-hr-page .riv-person-head{margin:15px 0}.riv-hr-page .riv-person-head h3{margin:0 0 8px} @media(max-width:550px){.riv-hr-page{padding:12px}.riv-hr-page .riv-hr-nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .riv-clock-pending{background:#fff0f0;color:#a12626;border-left:4px solid #b32b2b;padding:10px;border-radius:6px;font-weight:700}.riv-clock-review{border:1px solid #b32b2b;border-radius:8px;padding:10px}.riv-clock-msg{overflow-wrap:anywhere}
 
-/* 3.2-beta.2 – rustig en leesbaar rooster */
+/* 4.0-alpha.1 – rustig en leesbaar rooster */
 .week-grid{border:1px solid #dce5e8;border-radius:10px;background:#fff;max-width:100%}
 .week-tabel{font-size:14px;border-collapse:separate;border-spacing:0;min-width:760px}
 .week-tabel th,.week-tabel td{border:0;border-right:1px solid #e2e8eb;border-bottom:1px solid #e2e8eb;padding:10px;line-height:1.4}
@@ -149,7 +149,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '3.2-beta.2';
+const RIVAME_VERSION = '4.0-alpha.2';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1017,7 +1017,7 @@ function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined
  dlg.addEventListener('close',()=>{gen++;dlg.replaceChildren()});const old=toonDashboard;toonDashboard=async function(){reset();await old();await refresh()};db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN')reset();if(['INITIAL_SESSION','SIGNED_IN','TOKEN_REFRESHED'].includes(event))setTimeout(()=>{if(!el('dashboard').hidden)refresh()},0)});if(!el('dashboard').hidden)refresh();
 })();
 
-// Rivame 3.2-beta.2 – clock registration
+// Rivame 4.0-alpha.1 – clock registration
 (()=>{
  const get=r=>{if(r.error)throw r.error;return r.data};
  const host=maak('section',undefined,'kaart');host.hidden=true;el('dashboard').after(host);
@@ -1089,7 +1089,7 @@ function rivHRNav(dialog,active){const wrap=maak('div'),nav=maak('nav',undefined
  create.onclick=()=>run(async()=>{if(!el('maakWeek').hidden&&!weekId)await el('maakWeek').onclick()});refresh();
 })();
 
-// 3.2-beta.2: location-scoped roster groups and targeted shift refresh.
+// 4.0-alpha.1: location-scoped roster groups and targeted shift refresh.
 let rivGroups=[],rivGroupMembers=new Map(),rivGroupLoc=null,rivGroupSeq=0,rivGroupFilter=new Set(),rivGroupCollapsed=new Set();
 const rivGroupTools=el('rivGroupTools');
 const rivGroupDialog=maak('dialog');rivGroupDialog.className='nl-dialog';rivGroupDialog.style.cssText='width:min(760px,94vw);max-height:85vh;overflow:auto';document.body.append(rivGroupDialog);
@@ -1106,6 +1106,78 @@ const rivGroupRenderOld=week24Render;week24Render=function(){rivGroupRenderOld()
 const rivGroupWeekOld=laadWeek;laadWeek=async function(){if(rivGroupDialog.open)rivGroupDialog.close();const result=await rivGroupWeekOld.apply(this,arguments);await rivGroupLoad();return result};
 async function rivVerversDiensten(){const key=week24Key(),w=weekId,loc=huidigeLocatie,x=window.scrollX,y=window.scrollY,oldScroller=week24Host.querySelector('.week-grid'),sx=oldScroller?.scrollLeft||0;const r=await db.from('diensten').select('id,medewerker_id,begint_op,eindigt_op,pauze_minuten,attractie_id,opmerkingen,kleur').eq('roosterweek_id',w).order('begint_op');if(r.error)throw Error('Dienstwijziging verwerkt, maar het rooster kon niet worden vernieuwd: '+r.error.message);if(key!==week24Key()||loc!==huidigeLocatie)return;huidigeDiensten=r.data;resetFormulier();rivDienstLijst();week24Render();const sc=week24Host.querySelector('.week-grid');if(sc)sc.scrollLeft=sx;window.scrollTo({left:x,top:y,behavior:'instant'});void laadVerwijderd21(w).catch(()=>{});}
 db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN'){++rivGroupSeq;rivGroups=[];rivGroupMembers.clear();rivGroupFilter.clear();rivGroupCollapsed.clear();rivGroupLoc=null;rivGroupTools.hidden=true;if(rivGroupDialog.open)rivGroupDialog.close()}});
+
+// 4.0-alpha.1: bestaande bedrijfsomgeving, nog geen multi-tenant toegang.
+(()=>{
+ const pane=el('beheerPane');
+ const block=maak('div',undefined,'sectie');
+ block.append(maak('h3','Bedrijfsomgeving'));
+ block.append(maak('p','Bekijk het bedrijf en de gekoppelde locaties. Er kunnen in deze fase nog geen andere bedrijven worden toegevoegd.','subtiel'));
+ const button=maak('button','Bedrijfsoverzicht','secundair');button.type='button';block.append(button);
+ const out=maak('div');out.setAttribute('aria-live','polite');block.append(out);pane.prepend(block);
+ let seq=0;
+ button.onclick=async()=>{
+  if(gebruikersRol!=='beheerder')return;
+  const g=++seq;button.disabled=true;out.replaceChildren(maak('p','Bedrijfsgegevens laden…'));
+  try{
+   const {data,error}=await db.rpc('rivame_bedrijfsoverzicht');
+   if(g!==seq||gebruikersRol!=='beheerder')return;
+   if(error)throw error;if(!data)throw Error('Geen bedrijfsomgeving gevonden.');
+   const card=maak('div',undefined,'dienst');card.append(maak('h3',data.naam),maak('p','Rivame Personeel · bestaande bedrijfsomgeving','subtiel'));
+   const rows=Array.isArray(data.locaties)?data.locaties:[];
+   card.append(maak('strong',rows.length+' gekoppelde locatie(s)'));
+   for(const l of rows){const line=maak('p',l.naam+' · '+(l.actief?'Actief':'Inactief'));card.append(line);}
+   card.append(maak('p','Meerdere bedrijven: nog niet beschikbaar.','subtiel'));out.replaceChildren(card);
+  }catch(e){if(g===seq&&gebruikersRol==='beheerder')out.replaceChildren(maak('p','Bedrijfsoverzicht laden mislukt: '+e.message,'fout'));}
+  finally{if(g===seq)button.disabled=false;}
+ };
+ db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN'){++seq;out.replaceChildren();button.disabled=false;}});
+})();
+
+// 4.0-alpha.2: veiligheidsdashboard (alleen lezen, geen bestaande RLS-wijzigingen).
+(()=>{
+ const pane=el('beheerPane');
+ const box=maak('section',undefined,'sectie');
+ box.append(maak('h3','Veiligheidscontrole bedrijven'));
+ box.append(maak('p','We controleren de eerste bedrijfsindeling. Meerdere bedrijven zijn nog niet vrijgegeven.','subtiel'));
+ const knop=maak('button','Controle uitvoeren','secundair');
+ knop.type='button';
+ const resultaat=maak('div');resultaat.setAttribute('aria-live','polite');
+ box.append(knop,resultaat);pane.prepend(box);
+ let seq=0;
+ knop.onclick=async()=>{
+   if(gebruikersRol!=='beheerder')return;
+   const current=++seq;knop.disabled=true;
+   resultaat.replaceChildren(maak('p','Bedrijfsgegevens controleren…','subtiel'));
+   try {
+     const {data,error}=await db.rpc('rivame_veiligheidscontrole');
+     if(current!==seq||gebruikersRol!=='beheerder')return;
+     if(error)throw error;
+     if(!data)throw Error('Geen controlegegevens ontvangen.');
+     const paneel=maak('div',undefined,'dienst');
+     paneel.append(maak('h4','Controle 4.0-alpha.2'));
+     const regels=[
+       ['Bedrijven',data.bedrijven],
+       ['Locaties',data.locaties],
+       ['Profielen',data.profielen],
+       ['Actieve bedrijfsleden',data.actieve_bedrijfsleden],
+       ['Locaties zonder bedrijf',data.locaties_zonder_bedrijf],
+       ['Profielen zonder bedrijf',data.profielen_zonder_bedrijf],
+       ['Actieve bedrijfsbeheerders',data.bedrijfsbeheerders]
+     ];
+     for(const [naam,waarde] of regels){const r=maak('p');r.append(maak('strong',naam+': '),document.createTextNode(String(waarde??'—')));paneel.append(r);}
+     const check=maak('p',data.lidmaatschap_compleet?'De bedrijfsindeling is compleet.':'Let op: er ontbreken bedrijfskoppelingen.',data.lidmaatschap_compleet?'status':'fout');
+     paneel.append(check);
+     const waarschuwing=maak('p','⚠ '+(data.waarschuwing||'Nog niet gereed voor meerdere bedrijven.'),'fout');
+     paneel.append(waarschuwing);
+     const note=maak('p','Deze controle bewijst nog geen scheiding van gegevens. Daarvoor controleren en testen we alle databasepolicies en bestandsopslag.','subtiel');
+     paneel.append(note);resultaat.replaceChildren(paneel);
+   } catch(e){
+     if(current===seq)resultaat.replaceChildren(maak('p','Controle mislukt: '+(e.message||String(e)),'fout'));
+   } finally {if(current===seq)knop.disabled=false;}
+ };
+ db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN'){++seq;resultaat.replaceChildren();knop.disabled=false;}});
+})();
 </script>
 </body>
 </html>
