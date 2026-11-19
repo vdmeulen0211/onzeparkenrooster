@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.16';
+const RIVAME_VERSION = '4.0-alpha.17';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1603,6 +1603,130 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
   }
   host.replaceChildren(week);return result;
  };
+})();
+</script>
+<script>
+/* Rivame 4.0-alpha.17 — published roster shifts in Mijn uren.
+   Complements existing (legacy) clock registrations without changing them. */
+(()=>{
+  const panel=document.getElementById('rivameClockPanel');
+  if(!panel)return;
+  const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n};
+  const stamp=iso=>{const d=new Date(iso);const p=new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d);const v=k=>p.find(x=>x.type===k)?.value;return v('year')+'-'+v('month')+'-'+v('day')+'T'+v('hour')+':'+v('minute')};
+  const time=iso=>new Date(iso).toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam',dateStyle:'medium',timeStyle:'short'});
+  const field=(parent,label,value,type='datetime-local',disabled=false)=>{const wrap=node('label',label),input=node('input');input.type=type;input.value=value;input.disabled=disabled;if(type==='number'){input.min='0';input.step='1'}wrap.append(input);parent.append(wrap);return input};
+  const rpc=async(name,args)=>{const result=await db.rpc(name,args);if(result.error)throw result.error;return result.data};
+  let request=0,queued=false;
+  const show=async()=>{
+    const heading=panel.querySelector(':scope > .weekrij h2');
+    if(panel.hidden||!heading||heading.textContent.trim()!=='Mijn uren')return;
+    const body=panel.querySelector(':scope > div:not(.weekrij):not(.menu)');
+    if(!body||body.querySelector('.riv-alpha17-shifts'))return;
+    const token=++request,box=node('section',undefined,'riv-alpha17-shifts kaart');
+    box.append(node('h3','Mijn roosterdiensten'),node('p','Vanaf de begindag van een gepubliceerde dienst zie je hier je uren. Inklokken is niet verplicht.','subtiel'));
+    const list=node('div','Diensten ophalen…');box.append(list);body.prepend(box);
+    try{
+      const shifts=await rpc('rivame_mijn_geplande_uren');
+      if(token!==request||!box.isConnected)return;
+      list.replaceChildren();
+      if(!shifts?.length){list.append(node('p','Nog geen gepubliceerde diensten vanaf vandaag of eerder.','subtiel'));return}
+      for(const shift of shifts){
+        const card=node('details',undefined,'dienst');const summary=node('summary',time(shift.begint_op)+' – '+new Date(shift.eindigt_op).toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'})+' · '+(shift.uren_status==='gepland'?'Nog indienen':shift.uren_status));
+        card.append(summary);list.append(card);
+        if(shift.klokdienst_id){card.append(node('p','Deze dienst is geregistreerd. Status: '+shift.uren_status+'.','subtiel'));continue}
+        const edit=shift.medewerkers_mogen_wijzigen===true;
+        const b=field(card,'Begintijd',stamp(shift.begint_op),'datetime-local',!edit);
+        const e=field(card,'Eindtijd',stamp(shift.eindigt_op),'datetime-local',!edit);
+        const p=field(card,'Pauze (minuten)',String(shift.pauze_minuten||0),'number',!edit);
+        const reason=field(card,'Reden bij gewijzigde begintijd','','text',!edit);
+        const note=node('p',edit?'Tijden mogen worden gewijzigd. Alleen een gewijzigde begintijd vereist een reden.':'Je bedrijf staat het wijzigen van eigen tijden niet toe.','subtiel');
+        const status=node('p','','subtiel');const submit=node('button','Uren indienen','secundair klein');
+        const timeValue=x=>nlInstant(x.value.slice(0,10),x.value.slice(11,16)).toISOString();
+        const effectiveEnd=()=>edit?e.value:stamp(shift.eindigt_op);
+        const validate=()=>{
+          const value=effectiveEnd();if(!value)return false;
+          try{return new Date(timeValue({value})).getTime()<=Date.now()}catch{return false}
+        };
+        const refresh=()=>{submit.disabled=!validate();status.textContent=submit.disabled?'Indienen kan na de opgegeven eindtijd.':''};
+        if(edit)e.addEventListener('change',refresh);
+        submit.onclick=async()=>{
+          submit.disabled=true;status.textContent='Uren indienen…';
+          try{
+            const start=edit?timeValue(b):shift.begint_op;
+            const end=edit?timeValue(e):shift.eindigt_op;
+            if(edit&&new Date(start).getTime()!==new Date(shift.begint_op).getTime()&&!reason.value.trim())throw Error('Reden verplicht bij gewijzigde begintijd.');
+            const pause=edit?Number(p.value):Number(shift.pauze_minuten);
+            if(!Number.isInteger(pause)||pause<0)throw Error('Vul een geldige pauze in.');
+            await rpc('rivame_roosterdienst_indienen',{p_dienst_id:shift.dienst_id,p_begin:start,p_eind:end,p_pauze_minuten:pause,p_reden:reason.value.trim()||null});
+            card.replaceChildren(summary,node('p','Uren ingediend · wachten op goedkeuring van planner/HR.','subtiel'));
+          }catch(err){status.textContent=err.message||String(err);refresh();status.textContent=err.message||String(err)}
+        };
+        card.append(note,submit,status);refresh();
+      }
+    }catch(err){if(token===request&&box.isConnected)list.textContent='Roosterdiensten niet beschikbaar: '+(err.message||String(err))}
+  };
+  const watcher=new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;show()})});
+  watcher.observe(panel,{childList:true});
+  if(!panel.hidden)show();
+})();
+</script>
+<script>
+/* Company-wide permissions for alpha.17; system administrators only. */
+(()=>{
+ const host=document.getElementById('rivameClockPanel');if(!host)return;
+ let scheduled=false,version=0;
+ const element=(tag,text)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;return el};
+ const call=async(name,args)=>{const x=await db.rpc(name,args);if(x.error)throw x.error;return x.data};
+ async function show(){
+  if(host.hidden||gebruikersRol!=='beheerder')return;
+  const h=host.querySelector(':scope > .weekrij h2');
+  if(!h||h.textContent.trim()!=='Urenregistratie')return;
+  const tab=[...host.querySelectorAll(':scope > .menu button')].find(x=>x.textContent==='Instellingen');
+  if(!tab||!tab.classList.contains('riv-selected-company-settings'))return;
+ }
+ async function add(){
+  if(host.hidden||gebruikersRol!=='beheerder')return;
+  const nav=[...host.querySelectorAll(':scope > .menu button')];
+  const settings=nav.find(x=>x.textContent==='Instellingen');
+  if(!settings)return;
+  const body=host.querySelector(':scope > div:not(.weekrij):not(.menu)');
+  if(!body||body.querySelector('.riv-company-hours'))return;
+  // Settings screen contains the location-specific clock configuration.
+  if(!body.textContent.includes('Personeelstablet actief'))return;
+  const first=body.querySelector('h3')?.textContent||'';
+  if(!first||first.includes('urenoverzicht'))return;
+  const seq=++version,card=element('section');card.className='dienst riv-company-hours';
+  card.append(element('h3','Bedrijfsinstellingen · automatische urenregistratie'));
+  const message=element('p','Bedrijven laden…');card.append(message);body.prepend(card);
+  try{
+   const q=await db.from('locaties').select('bedrijf_id').not('bedrijf_id','is',null);
+   if(q.error)throw q.error;
+   const ids=[...new Set((q.data||[]).map(x=>x.bedrijf_id))];
+   if(!ids.length){message.textContent='Geen gekoppelde bedrijven gevonden.';return}
+   const select=element('select');
+   for(const id of ids){const option=element('option','Bedrijf '+id);option.value=id;select.append(option)}
+   const choose=element('label','Bedrijf ');choose.append(select);
+   const allow=element('input');allow.type='checkbox';
+   const clock=element('input');clock.type='checkbox';
+   const label=(text,input)=>{const l=element('label',text+' ');l.append(input);return l};
+   const save=element('button','Bedrijfsinstellingen opslaan');save.type='button';save.className='secundair klein';
+   card.append(choose,label('Medewerkers mogen eigen uren aanpassen',allow),label('Vrijwillig inklokken beschikbaar',clock),save);
+   const load=async()=>{message.textContent='Instellingen laden…';save.disabled=true;try{
+    const rows=await call('rivame_uren_bedrijf_instellingen_ophalen',{p_bedrijf_id:Number(select.value)});
+    if(seq!==version||!card.isConnected)return;
+    allow.checked=!!rows?.[0]?.medewerkers_mogen_wijzigen;clock.checked=!!rows?.[0]?.inklokken_beschikbaar;
+    message.textContent='Instellingen geladen voor bedrijf '+select.value+'.';
+   }catch(e){message.textContent=e.message||String(e)}finally{save.disabled=false}};
+   select.onchange=load;
+   save.onclick=async()=>{save.disabled=true;message.textContent='Opslaan…';try{
+    await call('rivame_uren_bedrijf_instellen',{p_bedrijf_id:Number(select.value),p_medewerkers_mogen_wijzigen:allow.checked,p_inklokken_beschikbaar:clock.checked});
+    message.textContent='Bedrijfsinstellingen opgeslagen.';
+   }catch(e){message.textContent=e.message||String(e)}finally{save.disabled=false}};
+   await load();
+  }catch(e){if(seq===version&&card.isConnected)message.textContent=e.message||String(e)}
+ }
+ const observer=new MutationObserver(()=>{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;add()})});
+ observer.observe(host,{childList:true,subtree:true});
 })();
 </script>
 </body>
