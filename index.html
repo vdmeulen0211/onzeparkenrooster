@@ -1637,45 +1637,70 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
     const body=panel.querySelector(':scope > div:not(.weekrij):not(.menu)');
     if(!body||body.querySelector('.riv-alpha17-shifts'))return;
     const token=++request,box=node('section',undefined,'riv-alpha17-shifts kaart');
-    box.append(node('h3','Mijn roosterdiensten'),node('p','Vanaf de begindag van een gepubliceerde dienst zie je hier je uren. Inklokken is niet verplicht.','subtiel'));
+    box.append(node('h3','Mijn roosterdiensten'),node('p','Klik op een datum om de tijden te bekijken of je uren in te dienen.','subtiel'));
     const list=node('div','Diensten ophalen…');box.append(list);body.prepend(box);
     try{
       const shifts=await rpc('rivame_mijn_geplande_uren');
       if(token!==request||!box.isConnected)return;
       list.replaceChildren();
       if(!shifts?.length){list.append(node('p','Nog geen gepubliceerde diensten vanaf vandaag of eerder.','subtiel'));return}
+      const labels={gepland:'Nog indienen',afgesloten:'Wacht op goedkeuring',goedgekeurd:'Goedgekeurd',open:'In uitvoering'};
+      const colors={gepland:'#a35c09',afgesloten:'#075eaa',goedgekeurd:'#087548',open:'#555'};
+      const counts=node('p','','subtiel');list.append(counts);
+      const updateCounts=()=>{const total=shifts.length,pending=shifts.filter(s=>s.uren_status==='gepland').length,review=shifts.filter(s=>s.uren_status==='afgesloten').length,done=shifts.filter(s=>s.uren_status==='goedgekeurd').length;counts.textContent=total+' diensten · '+pending+' nog indienen · '+review+' ter goedkeuring · '+done+' goedgekeurd'};
+      updateCounts();
       for(const shift of shifts){
-        const card=node('details',undefined,'dienst');const summary=node('summary',time(shift.begint_op)+' – '+new Date(shift.eindigt_op).toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'})+' · '+(shift.uren_status==='gepland'?'Nog indienen':shift.uren_status));
-        card.append(summary);list.append(card);
-        if(shift.klokdienst_id){card.append(node('p','Deze dienst is geregistreerd. Status: '+shift.uren_status+'.','subtiel'));continue}
-        const edit=shift.medewerkers_mogen_wijzigen===true;
-        const b=field(card,'Begintijd',stamp(shift.begint_op),'datetime-local',!edit);
-        const e=field(card,'Eindtijd',stamp(shift.eindigt_op),'datetime-local',!edit);
-        const p=field(card,'Pauze (minuten)',String(shift.pauze_minuten||0),'number',!edit);
-        const reason=field(card,'Reden bij gewijzigde begintijd','','text',!edit);
-        const note=node('p',edit?'Tijden mogen worden gewijzigd. Alleen een gewijzigde begintijd vereist een reden.':'Je bedrijf staat het wijzigen van eigen tijden niet toe.','subtiel');
-        const status=node('p','','subtiel');const submit=node('button','Uren indienen','secundair klein');
-        const timeValue=x=>nlInstant(x.value.slice(0,10),x.value.slice(11,16)).toISOString();
-        const effectiveEnd=()=>edit?e.value:stamp(shift.eindigt_op);
-        const validate=()=>{
-          const value=effectiveEnd();if(!value)return false;
-          try{return new Date(timeValue({value})).getTime()<=Date.now()}catch{return false}
+        const row=node('button',undefined,'riv-hours-row');
+        row.type='button';row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;background:transparent;border:1px solid #d9e1e3;border-radius:10px;padding:12px 14px;margin:7px 0;color:inherit;cursor:pointer';
+        const label=node('span');const badge=node('strong');badge.style.cssText='font-size:.82rem;white-space:normal;text-align:right';
+        const refreshRow=()=>{
+          const date=new Date(shift.begint_op).toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',weekday:'short',day:'numeric',month:'short',year:'numeric'});
+          const start=new Date(shift.begint_op).toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'});
+          const end=new Date(shift.eindigt_op).toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'});
+          label.textContent=date+' · '+start+'–'+end;
+          badge.textContent=labels[shift.uren_status]||shift.uren_status;
+          badge.style.color=colors[shift.uren_status]||'#555';
+          row.setAttribute('aria-label',label.textContent+' · '+badge.textContent+' · details openen');
+          updateCounts();
         };
-        const refresh=()=>{submit.disabled=!validate();status.textContent=submit.disabled?'Indienen kan na de opgegeven eindtijd.':''};
-        if(edit)e.addEventListener('change',refresh);
-        submit.onclick=async()=>{
-          submit.disabled=true;status.textContent='Uren indienen…';
-          try{
-            const start=edit?timeValue(b):shift.begint_op;
-            const end=edit?timeValue(e):shift.eindigt_op;
-            if(edit&&new Date(start).getTime()!==new Date(shift.begint_op).getTime()&&!reason.value.trim())throw Error('Reden verplicht bij gewijzigde begintijd.');
-            const pause=edit?Number(p.value):Number(shift.pauze_minuten);
-            if(!Number.isInteger(pause)||pause<0)throw Error('Vul een geldige pauze in.');
-            await rpc('rivame_roosterdienst_indienen',{p_dienst_id:shift.dienst_id,p_begin:start,p_eind:end,p_pauze_minuten:pause,p_reden:reason.value.trim()||null});
-            card.replaceChildren(summary,node('p','Uren ingediend · wachten op goedkeuring van planner/HR.','subtiel'));
-          }catch(err){status.textContent=err.message||String(err);refresh();status.textContent=err.message||String(err)}
+        row.append(label,badge);list.append(row);refreshRow();
+        row.onclick=()=>{
+          const dialog=node('dialog',undefined,'nl-dialog');
+          dialog.style.cssText='max-width:min(94vw,520px);max-height:85vh;overflow:auto;border-radius:14px;padding:22px';
+          const heading=node('h3',time(shift.begint_op));const current=node('p','Status: '+(labels[shift.uren_status]||shift.uren_status));
+          const note=node('p','Rooster: '+time(shift.begint_op)+' tot '+time(shift.eindigt_op),'subtiel');
+          const close=node('button','Sluiten','secundair klein');close.type='button';close.onclick=()=>dialog.close();
+          dialog.append(heading,current,note);
+          if(shift.klokdienst_id){
+            dialog.append(node('p',shift.uren_status==='goedgekeurd'?'Deze uren zijn goedgekeurd.':'Deze uren zijn ingediend en wachten op goedkeuring door planner/HR.','subtiel'));
+          }else{
+            const edit=shift.medewerkers_mogen_wijzigen===true;
+            const b=field(dialog,'Begintijd',stamp(shift.begint_op),'datetime-local',!edit);
+            const e=field(dialog,'Eindtijd',stamp(shift.eindigt_op),'datetime-local',!edit);
+            const p=field(dialog,'Pauze (minuten)',String(shift.pauze_minuten||0),'number',!edit);
+            const reason=field(dialog,'Reden bij gewijzigde begintijd','','text',!edit);
+            dialog.append(node('p',edit?'Alleen bij een gewijzigde begintijd is een reden verplicht.':'Je bedrijf staat het wijzigen van eigen uren niet toe.','subtiel'));
+            const status=node('p','','subtiel');const submit=node('button','Uren indienen','secundair klein');
+            const timeValue=x=>nlInstant(x.value.slice(0,10),x.value.slice(11,16)).toISOString();
+            const refresh=()=>{let ready=false;try{ready=new Date(edit?timeValue(e):shift.eindigt_op).getTime()<=Date.now()}catch{}submit.disabled=!ready;status.textContent=ready?'':'Indienen kan na de opgegeven eindtijd.'};
+            if(edit)e.addEventListener('change',refresh);
+            submit.onclick=async()=>{
+              submit.disabled=true;status.textContent='Uren indienen…';
+              try{
+                const start=edit?timeValue(b):shift.begint_op,end=edit?timeValue(e):shift.eindigt_op;
+                if(edit&&new Date(start).getTime()!==new Date(shift.begint_op).getTime()&&!reason.value.trim())throw Error('Reden verplicht bij gewijzigde begintijd.');
+                const pause=edit?Number(p.value):Number(shift.pauze_minuten);
+                if(!Number.isInteger(pause)||pause<0)throw Error('Vul een geldige pauze in.');
+                const id=await rpc('rivame_roosterdienst_indienen',{p_dienst_id:shift.dienst_id,p_begin:start,p_eind:end,p_pauze_minuten:pause,p_reden:reason.value.trim()||null});
+                shift.klokdienst_id=id;shift.uren_status='afgesloten';shift.begint_op=start;shift.eindigt_op=end;shift.pauze_minuten=pause;
+                refreshRow();dialog.close();
+              }catch(err){refresh();status.textContent=err.message||String(err)}
+            };
+            dialog.append(submit,status);refresh();
+          }
+          dialog.append(close);document.body.append(dialog);
+          dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
         };
-        card.append(note,submit,status);refresh();
       }
     }catch(err){if(token===request&&box.isConnected)list.textContent='Roosterdiensten niet beschikbaar: '+(err.message||String(err))}
   };
