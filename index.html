@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.19';
+const RIVAME_VERSION = '4.0-alpha.20';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1332,7 +1332,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  ];
  const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.19</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.20</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1668,7 +1668,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 @media(max-width:560px){.riv-alpha17-shifts{padding:15px!important}.riv-hours-stats{gap:6px}.riv-hours-stat{padding:10px 8px}.riv-hours-stat span{font-size:.69rem}.riv-hours-row{padding:13px!important;gap:8px!important}.riv-hours-badge{font-size:.69rem;padding:7px 8px;max-width:49%}}
 </style>
 <script>
-/* Rivame 4.0-alpha.19 — published roster shifts in Mijn uren.
+/* Rivame 4.0-alpha.20 — published roster shifts in Mijn uren.
    Complements existing (legacy) clock registrations without changing them. */
 (()=>{
   const panel=document.getElementById('rivameClockPanel');
@@ -1929,6 +1929,8 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
           const hour=Math.floor(mins/60)+':'+String(mins%60).padStart(2,'0');
           const btn=make('button',undefined,'riv-matrix-slot');btn.type='button';btn.dataset.status=item.status;
           btn.append(make('span',hour),make('small',clock(item.begin)+'–'+clock(item.end)));
+          const stateText={gepland:'○ Nog indienen',afgesloten:'◷ Te beoordelen',onbeslist:'? Onbeslist',afgekeurd:'✕ Afgekeurd',goedgekeurd:'✓ Goedgekeurd',open:'◷ In uitvoering'};
+          btn.append(make('small',stateText[item.status]||item.status,'riv-matrix-status-text'));
           btn.title=person+' · '+({gepland:'Nog indienen',afgesloten:'Wacht op goedkeuring',goedgekeurd:'Goedgekeurd'})[item.status];
           btn.onclick=()=>{
             const dialog=make('dialog',undefined,'nl-dialog riv-hours-dialog');
@@ -2255,6 +2257,86 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
    };
    group.onchange=draw;location.onchange=()=>{teamLocKeuze=location.value;laadTeamMedewerker()};draw();
   }catch(e){if(gen===teamGeneration)teamEmp.textContent='Teamrooster niet beschikbaar: '+(e.message||String(e))}
+ };
+})();
+</script>
+<style>
+/* Alpha.20 — the entire hours tile communicates approval status. */
+#rivameClockPanel .riv-matrix-table button.riv-matrix-slot{
+ background:#fff6e6!important;color:#67410b!important;border:1px solid #e7c98c!important;
+ border-left:5px solid #b77923!important;box-shadow:none!important;
+ min-height:69px;line-height:1.25;transition:filter .15s,transform .15s
+}
+#rivameClockPanel .riv-matrix-table button.riv-matrix-slot[data-status=afgesloten]{
+ background:#e7f1ff!important;color:#13538a!important;border-color:#9bc7f2!important;border-left-color:#287cc0!important
+}
+#rivameClockPanel .riv-matrix-table button.riv-matrix-slot[data-status=onbeslist]{
+ background:#fff0ce!important;color:#805306!important;border-color:#e9ce86!important;border-left-color:#c7921d!important
+}
+#rivameClockPanel .riv-matrix-table button.riv-matrix-slot[data-status=goedgekeurd]{
+ background:#dff6e9!important;color:#086c48!important;border-color:#a5ddc0!important;border-left-color:#0f9866!important
+}
+#rivameClockPanel .riv-matrix-table button.riv-matrix-slot[data-status=afgekeurd]{
+ background:#fde6e3!important;color:#a02c24!important;border-color:#efb1ac!important;border-left-color:#c4382d!important
+}
+#rivameClockPanel .riv-matrix-table button.riv-matrix-slot[data-status=open]{
+ background:#eef2f5!important;color:#4d6473!important;border-color:#c9d6db!important;border-left-color:#8298a4!important
+}
+#rivameClockPanel .riv-matrix-status-text{font-size:.67rem;font-weight:800;margin-top:5px}
+#rivameClockPanel .riv-matrix-table button.riv-matrix-slot:hover{filter:brightness(.96);transform:translateY(-1px)}
+/* The employee page has one week navigation and the schedule is first. */
+.riv-new-shell #home25[hidden],.riv-new-shell #werknemer[hidden]{display:none!important}
+#werknemer>.rij,#werknemer>.nl-weeknav{display:none!important}
+#werknemer>.riv-employee-weeknav{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 12px}
+#werknemer>.riv-employee-weeknav button{flex:1;min-width:120px;border-radius:9px;background:#e7f0f1;color:#123543;padding:10px;border:0;font-weight:700}
+#werknemer>.riv-employee-weeknav button:hover{background:#d7e8e6}
+#werknemer>.riv-employee-weeknav button:nth-child(2){background:#123543;color:#fff}
+#werknemer>.riv-employee-date-details{border:1px solid #dbe7e7;border-radius:10px;padding:8px 12px;margin:5px 0 10px}
+#werknemer>.riv-employee-date-details>summary{cursor:pointer;font-size:.84rem;color:#496c75}
+#werknemer>.riv-employee-extra-details{margin:14px 0;border:1px solid #dce8e8;border-radius:12px;padding:10px}
+#werknemer>.riv-employee-extra-details>summary{cursor:pointer;font-weight:650;color:#123543}
+#werknemer>#medewerkerDiensten{display:block;margin-top:8px}
+#werknemer>#medewerkerWeek{font-size:1rem;color:#57727b;margin:5px 0}
+</style>
+<script>
+/* Alpha.20: remove duplicate employee week toolbars and keep the
+   roster immediately under a single, working week navigation. */
+(()=>{
+ const pane=document.getElementById('werknemer'),input=document.getElementById('medewerkerDatum');
+ if(!pane||!input)return;
+ const heading=pane.querySelector(':scope > h2');
+ const make=(tag,label,cls)=>{const e=document.createElement(tag);if(label)e.textContent=label;if(cls)e.className=cls;return e};
+ const nav=make('div',undefined,'riv-employee-weeknav');
+ const change=delta=>{
+  const current=input.value||nlToday(),week=maandag(current);
+  input.value=delta===0?nlToday():verschuif(week,delta);
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+ };
+ for(const [label,offset] of [['‹ Vorige week',-7],['Deze week',0],['Volgende week ›',7]]){
+  const button=make('button',label);button.type='button';button.onclick=()=>change(offset);nav.append(button);
+ }
+ heading.after(nav);
+ const dateDetails=make('details',undefined,'riv-employee-date-details');
+ dateDetails.append(make('summary','Andere datum kiezen'));
+ const label=pane.querySelector('label[for=medewerkerDatum]');if(label)dateDetails.append(label);
+ dateDetails.append(input);
+ nav.after(dateDetails);
+ // The previous navigation rows remain connected for compatibility, but hidden.
+ for(const el of pane.querySelectorAll(':scope > .rij, :scope > .nl-weeknav'))el.hidden=true;
+ const shifts=document.getElementById('medewerkerDiensten');
+ const week=document.getElementById('medewerkerWeek');
+ const status=document.getElementById('medewerkerStatus');
+ if(shifts){if(status)status.after(shifts);else if(week)week.after(shifts)}
+ const opening=document.getElementById('medewerkerOpening');
+ if(opening){const details=make('details',undefined,'riv-employee-extra-details');details.append(make('summary','Openingstijden en agenda'),opening);pane.append(details)}
+ const oldPage=page25;
+ page25=function(page){
+  oldPage(page);
+  if(page==='rooster'&&gebruikersRol==='medewerker'){
+   document.getElementById('home25').hidden=true;
+   void laadMedewerkerRooster().catch(e=>{if(status)status.textContent=e.message||String(e)});
+   setTimeout(()=>pane.scrollIntoView({block:'start',behavior:'instant'}),0);
+  }
  };
 })();
 </script>
