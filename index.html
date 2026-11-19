@@ -1371,7 +1371,9 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
    const tab={rooster:'tabRooster',medewerkers:'tabMedewerkers',bedrijf:'tabBeheer'}[key];
    document.getElementById(tab)?.click();
   }
-  window.scrollTo({top:0,behavior:'instant'});
+  const destination=key==='rooster'?'roosterPane':key==='medewerkers'?'medewerkersPane':key==='bedrijf'?'beheerPane':null;
+  if(destination)setTimeout(()=>document.getElementById(destination)?.scrollIntoView({block:'start',behavior:'instant'}),0);
+  else window.scrollTo({top:0,behavior:'instant'});
  }
  function showMessage(message){const notice=home.querySelector('#rivShellNoticeText');if(notice)notice.textContent=message;navigate('home')}
  // Tablets may suspend and restore the tab while Mijn uren is selected.
@@ -2035,6 +2037,16 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
  const formBox=make('details',undefined,'riv-rooster-form-details');formBox.append(make('summary','Dienst invoeren of wijzigen'),form);
  pane.insertBefore(quick,document.getElementById('weekOpening'));
  quick.after(formBox);
+ // The old settings button pointed to an almost empty details section.
+ // Put the real opening-hours and week settings inside it.
+ const settings=pane.querySelector('.riv-roster-settings');
+ if(settings){
+  const dateInput=document.getElementById('datum');
+  for(const target of [document.getElementById('weekOpening'),pane.querySelector('label[for="datum"]'),dateInput,document.getElementById('weekTitel'),document.getElementById('roosterAfw'),document.getElementById('status')]){
+   if(target)settings.append(target);
+  }
+  const summary=settings.querySelector('summary');if(summary)summary.textContent='Openingstijden en roosterinstellingen';
+ }
  const board=make('section',undefined,'riv-availability-board');
  board.append(make('h3','Weekrooster & beschikbaarheid'),make('p','Alle medewerkers zijn zichtbaar. Groen = beschikbaar, rood = niet beschikbaar; verlof wordt apart aangegeven.','subtiel'));
  const content=make('div','Rooster laden…','riv-avail-scroll');board.append(content);
