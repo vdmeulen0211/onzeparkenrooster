@@ -1812,5 +1812,122 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
  observer.observe(host,{childList:true,subtree:true});
 })();
 </script>
+<style>
+.riv-manager-hub{margin:12px 0 24px;padding:20px;border:1px solid #dce9e7;border-radius:16px;background:#fff;box-shadow:0 7px 24px rgba(18,53,67,.06)}
+.riv-manager-hub h3{margin:0 0 5px;color:#123543}.riv-manager-hub .riv-manager-note{font-size:.86rem;color:#59707b;margin:0 0 14px}
+.riv-manager-filters{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}.riv-manager-filters button{border-radius:30px;padding:9px 13px;border:1px solid #d8e3e4;background:#f7faf9;color:#123543;font-weight:650;cursor:pointer}
+.riv-manager-filters button[aria-pressed=true]{background:#123543;color:#fff}
+.riv-manager-group{margin:17px 0}.riv-manager-group>h4{color:#123543;margin:0 0 9px;padding:0 0 8px;border-bottom:1px solid #e4ecec}
+.riv-manager-duty{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #e0e9e9;border-radius:12px;background:white;padding:12px 14px;margin:8px 0}
+.riv-manager-duty strong{display:block;color:#123543}.riv-manager-duty small{display:block;color:#677c85;margin-top:4px}.riv-manager-duty .riv-manager-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.riv-manager-state{font-size:.76rem;font-weight:750;padding:6px 9px;border-radius:30px;background:#fff1dc;color:#995709}
+.riv-manager-state.review{background:#e7f2ff;color:#155b9e}.riv-manager-state.approved{background:#e4f6ec;color:#087548}
+.riv-manager-duty button{border-radius:8px;border:0;background:#123543;color:#fff;padding:8px 11px;cursor:pointer}
+.riv-manager-duty button.secondary{background:#e9f0f1;color:#123543}
+@media(max-width:650px){.riv-manager-duty{align-items:stretch;flex-direction:column}.riv-manager-duty .riv-manager-actions{justify-content:flex-start}.riv-manager-hub{padding:13px}}
+</style>
+<script>
+/* Manager approval inbox: published shifts (including not yet submitted)
+   and standalone clock records in one employee-oriented overview. */
+(()=>{
+ const host=document.getElementById('rivameClockPanel');if(!host)return;
+ const make=(tag,value,cls)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(cls)n.className=cls;return n};
+ const query=async(builder)=>{const r=await builder;if(r.error)throw r.error;return r.data||[]};
+ const rpc=async(name,args)=>{const r=await db.rpc(name,args);if(r.error)throw r.error;return r.data};
+ const date=t=>new Date(t).toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',weekday:'short',day:'numeric',month:'short'});
+ const clock=t=>t?new Date(t).toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'}):'—';
+ let seq=0,queued=false;
+ const confirmLate=()=>new Promise(resolve=>{
+   const d=make('dialog',undefined,'nl-dialog riv-hours-dialog');d.append(make('h3','Medewerker te laat?'),make('p','Beoordeel de medewerker bij het goedkeuren van deze uren.'));
+   const bar=make('div');for(const [caption,value] of [['Ja',true],['Nee',false],['Annuleren',null]]){const b=make('button',caption,'secundair klein');b.type='button';b.onclick=()=>{resolve(value);d.close()};bar.append(b)}d.append(bar);document.body.append(d);d.addEventListener('cancel',e=>{e.preventDefault();resolve(null);d.close()});d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();
+ });
+ function init(){
+  if(host.hidden||!['beheerder','planner'].includes(gebruikersRol))return;
+  const heading=host.querySelector(':scope > .weekrij h2');
+  if(!heading||heading.textContent!=='Urenregistratie')return;
+  const body=host.querySelector(':scope > div:not(.weekrij):not(.menu)');
+  if(!body||body.querySelector('.riv-manager-hub'))return;
+  const selectors=[...body.querySelectorAll('select')];
+  const location=selectors.find(s=>s.previousElementSibling?.textContent==='Locatie');
+  const month=body.querySelector('input[type=month]');
+  if(!location||!month)return;
+  const hub=make('section',undefined,'riv-manager-hub');
+  hub.append(make('h3','Diensten & goedkeuringen'),make('p','Alle gepubliceerde roosterdiensten per medewerker. Keur ingediende uren direct goed.','riv-manager-note'));
+  const filters=make('div',undefined,'riv-manager-filters'),items=make('div','Diensten laden…'),error=make('p','');
+  hub.append(filters,items,error);body.prepend(hub);
+  let filter='all',data=[];
+  const draw=()=>{
+   items.replaceChildren();filters.replaceChildren();
+   const views=[['all','Alle diensten'],['gepland','Nog indienen'],['afgesloten','Goedkeuren'],['goedgekeurd','Goedgekeurd']];
+   for(const [key,label] of views){const count=key==='all'?data.length:data.filter(r=>r.status===key).length;const b=make('button',label+' ('+count+')');b.type='button';b.setAttribute('aria-pressed',String(filter===key));b.onclick=()=>{filter=key;draw()};filters.append(b)}
+   const visible=data.filter(r=>filter==='all'||r.status===filter);
+   if(!visible.length){items.append(make('p','Geen diensten met deze status.'));return}
+   const grouped=new Map();
+   for(const item of visible){const key=item.name;if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(item)}
+   for(const [name,entries] of grouped){
+    const group=make('section',undefined,'riv-manager-group');group.append(make('h4',name+' · '+entries.length+' dienst'+(entries.length===1?'':'en')));items.append(group);
+    for(const item of entries){
+     const row=make('div',undefined,'riv-manager-duty'),description=make('div'),actions=make('div',undefined,'riv-manager-actions');
+     description.append(make('strong',date(item.begin)+' · '+clock(item.begin)+' – '+clock(item.end)),make('small',item.source==='rooster'?'Gepubliceerd rooster':'Handmatige urenregistratie'));
+     const status=make('span',({gepland:'Nog indienen',afgesloten:'Te beoordelen',goedgekeurd:'Goedgekeurd',open:'Open'})[item.status]||item.status,'riv-manager-state '+(item.status==='afgesloten'?'review':item.status==='goedgekeurd'?'approved':''));
+     actions.append(status);row.append(description,actions);group.append(row);
+     if(item.status==='afgesloten'&&item.klok){
+       const approve=make('button','Goedkeuren');approve.type='button';
+       approve.onclick=async()=>{const late=await confirmLate();if(late===null)return;approve.disabled=true;error.textContent='Goedkeuren…';try{
+        await rpc('rivame_klok_goedkeuren_met_te_laat',{p_id:item.klok.id,p_begin:item.klok.begint_op,p_eind:item.klok.eindigt_op,p_pauze:item.klok.pauze_seconden,p_warm:item.klok.warme_maaltijden,p_koud:item.klok.koude_maaltijden,p_te_laat:late});
+        item.status='goedgekeurd';item.klok.status='goedgekeurd';error.textContent='Uren goedgekeurd.';draw();
+       }catch(e){error.textContent=e.message||String(e);approve.disabled=false}};
+       actions.append(approve);
+     }
+     if(item.klok&&item.status!=='open'){
+       const change=make('button','Wijzigen','secondary');change.type='button';
+       change.onclick=()=>{
+        const d=make('dialog',undefined,'nl-dialog riv-hours-dialog');
+        d.append(make('h3',name+' · '+date(item.begin)),make('p','Correctie door planner/leidinggevende. De wijziging wordt vastgelegd.','subtiel'));
+        const input=(label,value,type)=>{const l=make('label',label),i=make('input');i.type=type;i.value=value;l.append(i);d.append(l);return i};
+        const local=t=>{const p=new Intl.DateTimeFormat('nl-NL',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(t));const v=k=>p.find(x=>x.type===k)?.value;return v('year')+'-'+v('month')+'-'+v('day')+'T'+v('hour')+':'+v('minute')};
+        const begin=input('Begintijd',local(item.klok.begint_op),'datetime-local'),end=input('Eindtijd',local(item.klok.eindigt_op),'datetime-local'),pause=input('Pauze (minuten)',String(Math.round(item.klok.pauze_seconden/60)),'number'),reason=input('Reden correctie','','text');
+        const notice=make('p',''),save=make('button','Correctie opslaan'),cancel=make('button','Sluiten','secondary');
+        save.onclick=async()=>{save.disabled=true;try{
+         if(!reason.value.trim())throw Error('Vul een reden voor de correctie in.');
+         await rpc('rivame_klok_corrigeer',{p_id:item.klok.id,p_begin:nlInstant(begin.value.slice(0,10),begin.value.slice(11,16)).toISOString(),p_eind:nlInstant(end.value.slice(0,10),end.value.slice(11,16)).toISOString(),p_pauze_minuten:Number(pause.value),p_warm:item.klok.warme_maaltijden,p_koud:item.klok.koude_maaltijden,p_reden:reason.value.trim(),p_goedkeuren:false});
+         d.close();error.textContent='Correctie opgeslagen. Vernieuw het urenoverzicht om de nieuwe tijden te zien.';
+        }catch(e){notice.textContent=e.message||String(e);save.disabled=false}};
+        cancel.onclick=()=>d.close();d.append(notice,save,cancel);document.body.append(d);d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();
+       };
+       actions.append(change);
+     }else if(item.source==='rooster'){
+       const go=make('button','Rooster bekijken','secondary');go.type='button';go.onclick=()=>document.querySelector('[data-route=rooster]')?.click();actions.append(go);
+     }
+    }
+   }
+  };
+  const load=async()=>{
+   const token=++seq,lid=Number(location.value),period=month.value;
+   if(!lid||!/^[0-9]{4}-[0-9]{2}$/.test(period))return;
+   items.textContent='Diensten ophalen…';error.textContent='';
+   try{
+    const first=period+'-01',next=new Date(Date.UTC(Number(period.slice(0,4)),Number(period.slice(5,7)),1)).toISOString().slice(0,10);
+    const dateA=nlInstant(first,'00:00').toISOString(),dateB=nlInstant(next,'00:00').toISOString();
+    const [weeks,records,people]=await Promise.all([
+     query(db.from('roosterweken').select('id').eq('locatie_id',lid).eq('status','gepubliceerd').gte('week_start',maandag(first)).lt('week_start',next)),
+     query(db.from('rivame_klokdiensten').select('id,bron_dienst_id,profiel_id,begint_op,eindigt_op,pauze_seconden,warme_maaltijden,koude_maaltijden,status').eq('locatie_id',lid).is('verwijderd_op',null).gte('begint_op',dateA).lt('begint_op',dateB)),
+     query(db.from('profielen').select('id,naam')).catch(()=>[])
+    ]);
+    const names=new Map(people.map(x=>[x.id,x.naam||'Medewerker']));
+    const shifts=[];
+    for(let i=0;i<weeks.length;i+=50){const ids=weeks.slice(i,i+50).map(w=>w.id);if(ids.length)shifts.push(...await query(db.from('diensten').select('id,medewerker_id,begint_op,eindigt_op,pauze_minuten').in('roosterweek_id',ids).gte('begint_op',dateA).lt('begint_op',dateB)))}
+    if(token!==seq||!hub.isConnected)return;
+    const bySource=new Map(records.filter(r=>r.bron_dienst_id!=null).map(r=>[String(r.bron_dienst_id),r]));
+    data=shifts.map(s=>{const k=bySource.get(String(s.id));return {name:names.get(s.medewerker_id)||'Medewerker '+s.medewerker_id.slice(0,8),begin:k?.begint_op||s.begint_op,end:k?.eindigt_op||s.eindigt_op,status:k?.status||'gepland',klok:k,source:'rooster'}});
+    for(const k of records.filter(k=>k.bron_dienst_id==null)){data.push({name:names.get(k.profiel_id)||'Medewerker '+k.profiel_id.slice(0,8),begin:k.begint_op,end:k.eindigt_op,status:k.status,klok:k,source:'klok'})}
+    data.sort((a,b)=>a.name.localeCompare(b.name,'nl')||new Date(b.begin)-new Date(a.begin));draw();
+   }catch(e){if(token===seq)items.textContent='Diensten konden niet geladen worden: '+(e.message||String(e))}
+  };
+  load();
+ }
+ const observer=new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;init()})});observer.observe(host,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
