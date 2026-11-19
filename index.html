@@ -1619,6 +1619,37 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  };
 })();
 </script>
+<style>
+/* Rivame alpha.17: compact, mobile-first roster-hours presentation */
+.riv-alpha17-shifts{margin:18px 0 24px;padding:22px!important;border:1px solid #dce9e7;border-radius:18px;background:#fff;box-shadow:0 8px 30px rgba(18,53,67,.055)}
+.riv-alpha17-shifts>h3{margin:0 0 5px;color:#123543;font-size:1.25rem;letter-spacing:-.02em}
+.riv-alpha17-shifts>p{margin:0 0 16px;color:#627785;line-height:1.5}
+.riv-hours-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 19px}
+.riv-hours-stat{display:flex;flex-direction:column;gap:3px;border-radius:12px;padding:12px 14px;background:#f5f8f8}
+.riv-hours-stat strong{font-size:1.5rem;font-weight:800;line-height:1;color:#123543}
+.riv-hours-stat span{font-size:.76rem;font-weight:650;color:#546c78}
+.riv-hours-stat.todo{background:#fff6e9}.riv-hours-stat.todo strong{color:#9a5409}
+.riv-hours-stat.review{background:#edf5ff}.riv-hours-stat.review strong{color:#155b9e}
+.riv-hours-stat.approved{background:#ecf8f1}.riv-hours-stat.approved strong{color:#087548}
+.riv-alpha17-shifts .riv-hours-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;background:#fff;color:#123543;border:1px solid #e0e9eb;border-radius:13px;padding:15px 17px;margin:9px 0;cursor:pointer;box-shadow:0 2px 9px rgba(18,53,67,.035);transition:border-color .15s,box-shadow .15s,transform .15s}
+.riv-alpha17-shifts .riv-hours-row:hover{border-color:#20a994;box-shadow:0 5px 16px rgba(18,53,67,.095);transform:translateY(-1px)}
+.riv-alpha17-shifts .riv-hours-row:focus-visible{outline:3px solid #20b8a2;outline-offset:2px}
+.riv-hours-row-main{display:flex;flex-direction:column;min-width:0;gap:5px}
+.riv-hours-row-main strong{font-size:.99rem;font-weight:750;text-transform:capitalize}
+.riv-hours-row-main small{color:#657a86;font-size:.87rem;font-variant-numeric:tabular-nums}
+.riv-hours-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:100px;padding:7px 10px;font-weight:750;font-size:.76rem;line-height:1.2;flex-shrink:0;max-width:47%;text-align:center}
+.riv-hours-badge[data-status=gepland]{background:#fff1dc}
+.riv-hours-badge[data-status=afgesloten]{background:#e7f2ff}
+.riv-hours-badge[data-status=goedgekeurd]{background:#e4f6ec}
+.riv-hours-badge[data-status=open]{background:#edf0f1}
+dialog.riv-hours-dialog{width:min(94vw,530px);max-height:85vh;overflow:auto;border:1px solid #dce9e7;border-radius:18px;padding:24px;box-shadow:0 24px 70px rgba(9,40,56,.25)}
+dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:blur(3px)}
+.riv-hours-dialog h3{color:#123543;margin:0 0 12px}
+.riv-hours-dialog label{display:block;margin:12px 0;font-size:.9rem;font-weight:650}
+.riv-hours-dialog input{display:block;width:100%;margin:6px 0 0;box-sizing:border-box}
+.riv-hours-dialog button{margin:8px 8px 0 0}
+@media(max-width:560px){.riv-alpha17-shifts{padding:15px!important}.riv-hours-stats{gap:6px}.riv-hours-stat{padding:10px 8px}.riv-hours-stat span{font-size:.69rem}.riv-hours-row{padding:13px!important;gap:8px!important}.riv-hours-badge{font-size:.69rem;padding:7px 8px;max-width:49%}}
+</style>
 <script>
 /* Rivame 4.0-alpha.17 — published roster shifts in Mijn uren.
    Complements existing (legacy) clock registrations without changing them. */
@@ -1646,27 +1677,37 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
       if(!shifts?.length){list.append(node('p','Nog geen gepubliceerde diensten vanaf vandaag of eerder.','subtiel'));return}
       const labels={gepland:'Nog indienen',afgesloten:'Wacht op goedkeuring',goedgekeurd:'Goedgekeurd',open:'In uitvoering'};
       const colors={gepland:'#a35c09',afgesloten:'#075eaa',goedgekeurd:'#087548',open:'#555'};
-      const counts=node('p','','subtiel');list.append(counts);
-      const updateCounts=()=>{const total=shifts.length,pending=shifts.filter(s=>s.uren_status==='gepland').length,review=shifts.filter(s=>s.uren_status==='afgesloten').length,done=shifts.filter(s=>s.uren_status==='goedgekeurd').length;counts.textContent=total+' diensten · '+pending+' nog indienen · '+review+' ter goedkeuring · '+done+' goedgekeurd'};
+      const counts=node('div',undefined,'riv-hours-stats');list.append(counts);
+      const updateCounts=()=>{
+        const pending=shifts.filter(s=>s.uren_status==='gepland').length,review=shifts.filter(s=>s.uren_status==='afgesloten').length,done=shifts.filter(s=>s.uren_status==='goedgekeurd').length;
+        counts.replaceChildren();
+        for(const [number,label,cls] of [[pending,'Nog indienen','todo'],[review,'Ter goedkeuring','review'],[done,'Goedgekeurd','approved']]){
+          const stat=node('div',undefined,'riv-hours-stat '+cls);
+          stat.append(node('strong',String(number)),node('span',label));counts.append(stat);
+        }
+      };
       updateCounts();
       for(const shift of shifts){
         const row=node('button',undefined,'riv-hours-row');
-        row.type='button';row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;background:transparent;border:1px solid #d9e1e3;border-radius:10px;padding:12px 14px;margin:7px 0;color:inherit;cursor:pointer';
-        const label=node('span');const badge=node('strong');badge.style.cssText='font-size:.82rem;white-space:normal;text-align:right';
+        row.type='button';
+        const label=node('span',undefined,'riv-hours-row-main'),dateLabel=node('strong'),timeLabel=node('small');
+        label.append(dateLabel,timeLabel);
+        const badge=node('span',undefined,'riv-hours-badge');
         const refreshRow=()=>{
           const date=new Date(shift.begint_op).toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',weekday:'short',day:'numeric',month:'short',year:'numeric'});
           const start=new Date(shift.begint_op).toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'});
           const end=new Date(shift.eindigt_op).toLocaleTimeString('nl-NL',{timeZone:'Europe/Amsterdam',hour:'2-digit',minute:'2-digit'});
-          label.textContent=date+' · '+start+'–'+end;
+          dateLabel.textContent=date;
+          timeLabel.textContent=start+' – '+end;
           badge.textContent=labels[shift.uren_status]||shift.uren_status;
           badge.style.color=colors[shift.uren_status]||'#555';
-          row.setAttribute('aria-label',label.textContent+' · '+badge.textContent+' · details openen');
+          badge.dataset.status=shift.uren_status;
+          row.setAttribute('aria-label',date+' · '+start+' tot '+end+' · '+badge.textContent+' · details openen');
           updateCounts();
         };
         row.append(label,badge);list.append(row);refreshRow();
         row.onclick=()=>{
-          const dialog=node('dialog',undefined,'nl-dialog');
-          dialog.style.cssText='max-width:min(94vw,520px);max-height:85vh;overflow:auto;border-radius:14px;padding:22px';
+          const dialog=node('dialog',undefined,'nl-dialog riv-hours-dialog');
           const heading=node('h3',time(shift.begint_op));const current=node('p','Status: '+(labels[shift.uren_status]||shift.uren_status));
           const note=node('p','Rooster: '+time(shift.begint_op)+' tot '+time(shift.eindigt_op),'subtiel');
           const close=node('button','Sluiten','secundair klein');close.type='button';close.onclick=()=>dialog.close();
@@ -1679,6 +1720,9 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
             const e=field(dialog,'Eindtijd',stamp(shift.eindigt_op),'datetime-local',!edit);
             const p=field(dialog,'Pauze (minuten)',String(shift.pauze_minuten||0),'number',!edit);
             const reason=field(dialog,'Reden bij gewijzigde begintijd','','text',!edit);
+            const toggleReason=()=>{reason.parentElement.hidden=!edit||!b.value||new Date(nlInstant(b.value.slice(0,10),b.value.slice(11,16))).getTime()===new Date(shift.begint_op).getTime()};
+            if(edit)b.addEventListener('change',()=>{try{toggleReason()}catch{reason.parentElement.hidden=false}});
+            reason.parentElement.hidden=true;
             dialog.append(node('p',edit?'Alleen bij een gewijzigde begintijd is een reden verplicht.':'Je bedrijf staat het wijzigen van eigen uren niet toe.','subtiel'));
             const status=node('p','','subtiel');const submit=node('button','Uren indienen','secundair klein');
             const timeValue=x=>nlInstant(x.value.slice(0,10),x.value.slice(11,16)).toISOString();
