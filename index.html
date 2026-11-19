@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.13';
+const RIVAME_VERSION = '4.0-alpha.14';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -439,7 +439,9 @@ async function toonDashboard(){
  if(error||!p)throw Error('Geen geldig profiel gevonden.');
  gebruikersRol=p.rol;
  el('login').hidden=true;el('dashboard').hidden=false;
- el('welkom').textContent='Welkom, '+(p.naam||'medewerker');
+ el('welkom').dataset.personName=p.naam||'medewerker';
+ const hour=Number(new Intl.DateTimeFormat('nl-NL',{hour:'numeric',hourCycle:'h23',timeZone:'Europe/Amsterdam'}).format(new Date()));
+ el('welkom').textContent=(hour<12?'Goedemorgen':hour<18?'Goedemiddag':'Goedenavond')+', '+el('welkom').dataset.personName;
  el('rol').textContent='Ingelogd als '+(p.rol==='planner'?'roostermaker':p.rol);
  const magPlannen=['planner','beheerder'].includes(p.rol);
  el('planner').hidden=!magPlannen;
@@ -788,7 +790,7 @@ for(const b of document.querySelectorAll('[data-page25]'))b.onclick=()=>page25(b
 el('uit25').onclick=()=>el('logout').click();
 new MutationObserver(()=>{el('nieuws25').textContent=el('berichten25').textContent}).observe(el('berichten25'),{childList:true,characterData:true,subtree:true});
 async function next25(){const gen=++homeGen25,vak=el('next25');vak.textContent='Volgende dienst laden…';try{const {data:{user}}=await db.auth.getUser();if(!user||gebruikersRol!=='medewerker')return;const r=await db.from('diensten').select('begint_op,eindigt_op,pauze_minuten,roosterweek_id').eq('medewerker_id',user.id).gt('eindigt_op',new Date().toISOString()).order('begint_op').limit(1);if(r.error)throw r.error;const d=r.data[0];let loc=null;if(d){const w=await db.from('roosterweken').select('locatie_id').eq('id',d.roosterweek_id).eq('status','gepubliceerd').maybeSingle();if(w.error)throw w.error;loc=locaties.find(l=>String(l.id)===String(w.data?.locatie_id));if(!w.data)throw Error('Geen gepubliceerd rooster gevonden.')}if(gen!==homeGen25||gebruikersRol!=='medewerker')return;vak.replaceChildren(maak('p','Jouw volgende dienst','subtiel'));if(!d){vak.append(maak('h2','Geen komende dienst gepland'));return}vak.append(maak('strong',new Date(d.begint_op).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Amsterdam'})),maak('h2',lokaleTijd(d.begint_op)+' – '+lokaleTijd(d.eindigt_op)),maak('p',loc?.naam||'Locatie'),maak('p','Pauze '+d.pauze_minuten+' min · '+urenTekst(minutenNetto(d)),'subtiel'))}catch(e){if(gen===homeGen25&&gebruikersRol==='medewerker')vak.textContent='Volgende dienst niet beschikbaar: '+e.message}}
-const dashOud25=toonDashboard;toonDashboard=async function(){++homeGen25;el('home25').hidden=true;el('nav25').hidden=true;el('profiel25').hidden=true;document.body.classList.remove('opr25employee');await dashOud25();if(gebruikersRol==='medewerker'&&!el('dashboard').hidden){document.body.classList.add('opr25employee');el('nav25').hidden=false;const naam=el('welkom').textContent.replace(/^Welkom, /,'');el('groet25').replaceChildren(maak('h2','Hallo, '+naam+'!'),maak('p',new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Amsterdam'}),'subtiel'));el('profielNaam25').textContent=naam;page25('home')}};
+const dashOud25=toonDashboard;toonDashboard=async function(){++homeGen25;el('home25').hidden=true;el('nav25').hidden=true;el('profiel25').hidden=true;document.body.classList.remove('opr25employee');await dashOud25();if(gebruikersRol==='medewerker'&&!el('dashboard').hidden){document.body.classList.add('opr25employee');el('nav25').hidden=false;const naam=el('welkom').dataset.personName||'medewerker';el('groet25').replaceChildren(maak('h2','Hallo, '+naam+'!'),maak('p',new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Amsterdam'}),'subtiel'));el('profielNaam25').textContent=naam;page25('home')}};
 // Initial session may have begun before later wrappers were registered.
 const init25=setInterval(()=>{if(!el('dashboard').hidden&&gebruikersRol==='medewerker'){clearInterval(init25);if(!document.body.classList.contains('opr25employee'))toonDashboard().catch(e=>{el('loginMelding').textContent=e.message})}else if(!el('dashboard').hidden&&gebruikersRol){clearInterval(init25)}},250);setTimeout(()=>clearInterval(init25),15000);
 
@@ -1301,7 +1303,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  ];
  const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.13</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.14</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1359,6 +1361,29 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  }
  function showMessage(message){const notice=home.querySelector('#rivShellNoticeText');if(notice)notice.textContent=message;navigate('home')}
  window.rivameNaarDashboard=()=>navigate('home');
+ let nextShiftRequest=0;
+ async function loadNextShift(intro){
+  const request=++nextShiftRequest;const target=intro.querySelector('.riv-next-shift');
+  if(!target)return;
+  try{
+   const userResult=await db.auth.getUser();const user=userResult.data?.user;
+   if(userResult.error||!user)throw Error('Geen ingelogde gebruiker');
+   const result=await db.from('diensten').select('begint_op,eindigt_op,roosterweek_id').eq('medewerker_id',user.id).gt('eindigt_op',new Date().toISOString()).order('begint_op').limit(100);
+   if(result.error)throw result.error;
+   const shifts=result.data||[];let next=null;
+   if(shifts.length){
+    const weeks=await db.from('roosterweken').select('id,status').in('id',[...new Set(shifts.map(s=>s.roosterweek_id))]);
+    if(weeks.error)throw weeks.error;
+    const published=new Set((weeks.data||[]).filter(w=>w.status==='gepubliceerd').map(w=>String(w.id)));
+    next=shifts.find(s=>published.has(String(s.roosterweek_id)))||null;
+   }
+   if(request!==nextShiftRequest||!intro.isConnected)return;
+   if(!next){target.textContent='Nog geen komende dienst ingepland';return}
+   const date=new Date(next.begint_op).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Amsterdam'});
+   const time=value=>new Date(value).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'});
+   target.textContent=date+' · '+time(next.begint_op)+' – '+time(next.eindigt_op);
+  }catch(e){if(request===nextShiftRequest&&intro.isConnected)target.textContent='Je volgende dienst kon niet worden opgehaald'}
+ }
  function refresh(){
   if(pending)return;
   const on=accessible();document.body.classList.toggle('riv-new-shell',on);sidebar.hidden=!on;home.hidden=!on;mobileToggle.hidden=!on;backdrop.hidden=!on;if(!on)support.hidden=true;
@@ -1366,7 +1391,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
   links.replaceChildren();
   const available=gebruikersRol==='medewerker'?employeeRoutes:routes.filter(x=>x[0]!=='bedrijf'||gebruikersRol==='beheerder');
   for(const [key,icon,label] of available){const b=document.createElement('button');b.type='button';b.dataset.route=key;b.innerHTML='<span class="riv-shell-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span>';b.onclick=()=>navigate(key);links.append(b)}
-  home.replaceChildren();const intro=document.createElement('div');intro.className='riv-shell-intro';const naam=document.getElementById('welkom').textContent.replace(/^Welkom,\s*/,'');intro.innerHTML='<h2>Goedemorgen, <span></span>!</h2><p>Alles voor je personeel en planning, overzichtelijk op één plek.</p>';intro.querySelector('span').textContent=naam;home.append(intro);
+  home.replaceChildren();const intro=document.createElement('div');intro.className='riv-shell-intro';intro.innerHTML='<h2>Eerstvolgende dienst:</h2><p class="riv-next-shift" role="status">Je volgende dienst laden…</p>';home.append(intro);void loadNextShift(intro);
   const heading=document.createElement('h2');heading.className='riv-shell-heading';heading.textContent='Waar wil je naartoe?';home.append(heading);
   const grid=document.createElement('div');grid.className='riv-shell-grid';for(const [key,icon,label,subtitle] of available.slice(1)){const b=document.createElement('button');b.type='button';b.className='riv-shell-tile';b.innerHTML='<span class="riv-shell-tileicon" aria-hidden="true">'+icon+'</span><strong>'+label+'</strong><small>'+subtitle+'</small>';b.onclick=()=>navigate(key);grid.append(b)}home.append(grid);
   const notice=document.createElement('div');notice.className='riv-shell-notice';notice.innerHTML='<h3>Wat vraagt aandacht?</h3><p id="rivShellNoticeText"></p>';notice.querySelector('p').textContent=gebruikersRol==='medewerker'?'Bekijk je komende dienst, berichten en verlofaanvragen via de tegels hierboven.':'Open het rooster, HR of Mijn uren om de actuele meldingen en aanvragen te bekijken.';home.append(notice);
