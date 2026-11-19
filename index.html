@@ -149,7 +149,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.8';
+const RIVAME_VERSION = '4.0-alpha.9';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1278,10 +1278,21 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  const planner=document.getElementById('planner');
  const home=document.createElement('section');home.className='riv-shell-home';home.id='rivShellHome';home.hidden=true;dashboard.after(home);
  const support=document.createElement('section');support.className='riv-support-page';support.hidden=true;support.innerHTML='<h2>Support en hulp</h2><p>Waarmee kunnen we je helpen? Zoek een onderwerp of open een uitleg.</p><label for="rivSupportSearch">Zoeken in hulpteksten</label><input type="search" id="rivSupportSearch" placeholder="Bijvoorbeeld: rooster, verlof, uren"><div id="rivSupportTopics"></div><p class="subtiel">Kom je er niet uit? Neem contact op met je bedrijfsbeheerder. De AI-assistent wordt later toegevoegd.</p>';home.after(support);
- const topics=[['Rooster bekijken','Open Rooster om de geplande diensten van jouw locatie te zien. Met Vorige week en Volgende week blader je door de planning.'],['Een dienst toevoegen','Ga naar Rooster en klik op het plusje bij de juiste medewerker en dag. Kies vervolgens de tijden en sla de dienst op.'],['Mijn uren','Bij Mijn uren zie je alleen je eigen geregistreerde diensten, pauzes en eventuele correcties.'],['Uren corrigeren','Open Mijn uren, kies de betreffende dienst en gebruik Opslaan als jouw bedrijf eigen correcties toestaat.'],['Verlof aanvragen','Medewerkers openen Verlof. Een leidinggevende beoordeelt de aanvragen in de daarvoor bestemde HR- of afwezigheidsweergave.'],['Medewerkers beheren','Via Medewerkers kies je de locatie en de medewerker. Wijzigingen zijn afhankelijk van je rechten.'],['Roosterinstellingen','Open Rooster en klik op Instellingen voor sjablonen, deadlines en roostergroepen.']];
- const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');for(const [name,body] of topics.filter(x=>(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
+ const topics=[
+  ['Mijn rooster bekijken','Open Mijn rooster om je gepubliceerde diensten te bekijken.','iedereen'],
+  ['Mijn uren','Bij Mijn uren zie je je eigen geregistreerde diensten, pauzes en eventuele correcties.','iedereen'],
+  ['Uren corrigeren','Open Mijn uren en kies de dienst die je wilt corrigeren. Dit kan alleen als je bedrijf deze mogelijkheid heeft ingeschakeld.','iedereen'],
+  ['Verlof aanvragen','Open Verlof of Afwezigheid om een aanvraag in te dienen en later de status te bekijken.','iedereen'],
+  ['Beschikbaarheid doorgeven','Open Beschikbaarheid, selecteer de week en geef aan wanneer je kunt werken.','iedereen'],
+  ['Berichten bekijken','Open Berichten voor mededelingen en communicatie die voor jouw account beschikbaar zijn.','iedereen'],
+  ['Een dienst toevoegen','Open Rooster en klik op het plusje bij de juiste medewerker en dag. Controleer de tijden en sla de dienst op.','planning'],
+  ['Medewerkers beheren','Via Medewerkers kies je de locatie en de medewerker. Welke gegevens je mag wijzigen hangt af van je rechten.','planning'],
+  ['Roosterinstellingen','Open Rooster en klik op Roosterinstellingen voor sjablonen, deadlines en roostergroepen.','planning'],
+  ['HR en goedkeuringen','Open HR voor personeelsdossiers, afwezigheid en onderdelen waarvoor je rechten hebt.','planning']
+ ];
+ const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.8</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.9</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1307,7 +1318,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
   support.hidden=key!=='support';document.body.classList.toggle('riv-shell-support',key==='support');
   if(key!=='uren'){document.body.classList.remove('riv-shell-hours');window.rivameSluitUren?.()}
   const selectRoute=route=>{current=route;links.querySelectorAll('button').forEach(b=>{if(b.dataset.route===route)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')})};
-  if(key==='support'){closeOtherPages();window.rivameSluitUren?.();document.body.classList.remove('riv-shell-hours');document.body.classList.add('riv-shell-at-home');if(gebruikersRol==='medewerker')page25('home');selectRoute('support');return}
+  if(key==='support'){closeOtherPages();window.rivameSluitUren?.();document.body.classList.remove('riv-shell-hours');document.body.classList.add('riv-shell-at-home');if(gebruikersRol==='medewerker')page25('home');drawTopics();selectRoute('support');return}
   if(key==='uren'){
    closeOtherPages();
    document.body.classList.add('riv-shell-at-home','riv-shell-hours');
