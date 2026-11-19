@@ -1374,6 +1374,20 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
   window.scrollTo({top:0,behavior:'instant'});
  }
  function showMessage(message){const notice=home.querySelector('#rivShellNoticeText');if(notice)notice.textContent=message;navigate('home')}
+ // Tablets may suspend and restore the tab while Mijn uren is selected.
+ // Re-apply that route on return so the shell does not remain blank.
+ let lastHoursRestore=0;
+ function restoreHoursAfterResume(force=false){
+  if(document.hidden||current!=='uren'||!accessible())return;
+  if(document.querySelector('dialog[open]'))return;
+  const now=Date.now();if(now-lastHoursRestore<1200)return;
+  lastHoursRestore=now;
+  const clock=document.getElementById('rivameClockPanel');
+  if(force||!clock||clock.hidden||!document.body.classList.contains('riv-shell-hours'))navigate('uren');
+ }
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(()=>restoreHoursAfterResume(true),150)});
+ window.addEventListener('pageshow',()=>setTimeout(()=>restoreHoursAfterResume(true),150));
+ window.addEventListener('focus',()=>setTimeout(restoreHoursAfterResume,150));
  window.rivameNaarDashboard=()=>navigate('home');
  let nextShiftRequest=0;
  async function loadNextShift(intro){
