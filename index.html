@@ -772,7 +772,7 @@ async function rivControleOverlap(ctx,start,stop,excludeId){
  const r=await q.limit(1);if(r.error)throw r.error;if(r.data.length)throw Error('Deze medewerker heeft al een overlappende dienst.');
 }
 function week24Render(){
- week24Host.replaceChildren();if(!weekId||!['concept','gepubliceerd'].includes(weekStatus))return;
+ week24Host.replaceChildren();if(weekId&&!['concept','gepubliceerd'].includes(weekStatus))return;
  const key=week24Key(),start=maandag(el('datum').value);if(week24Copy?.key!==key)week24Copy=null;
  const ids=Array.from(el('medewerker').options).map(o=>o.value);const all=[...new Set([...ids,...huidigeDiensten.map(d=>String(d.medewerker_id))])];
  const info=maak('p',week24Copy?'Kies een plusje om de geselecteerde dienst te kopiëren.':'Klik op + voor een sjabloon of handmatige dienst. Klik op een dienst om te wijzigen. Sleep een dienst naar een ander vakje en laat los op Kopiëren of Verplaatsen.','subtiel');week24Host.append(info,maak('p','Weekuren zijn netto geplande uren (inclusief conceptroosters). Het geplande verschil met het contract is indicatief, niet het officiële HR-saldo.','subtiel'));
@@ -784,7 +784,7 @@ function week24Render(){
  const box=maak('div',undefined,'opr24shift'),b=week24Button(lokaleTijd(d.begint_op)+'–'+lokaleTijd(d.eindigt_op),()=>wijzigDienst(d.id),'secundair klein opr24time');b.draggable=true;b.ondragstart=e=>{week24Drag={key,d};e.dataTransfer.setData('text/plain',String(d.id));e.dataTransfer.effectAllowed='copyMove'};b.ondragend=()=>{week24Drag=null;rivSleepRuimOp()};
  const actions=maak('div',undefined,'opr24actions');actions.append(week24Button('Kopie',()=>{week24Copy={key,d};week24Render()}),week24Button('Log',()=>toonDienstLog21(d.id)));if(d.kleur){box.style.background=d.kleur;box.style.borderLeft='4px solid var(--park)';b.style.color='#17241e'}box.append(b,actions);cell.append(box);
  }
- if(ids.includes(id)){const plus=week24Button('+',()=>week24Open(id,day,week24Copy?.d||null),'secundair opr24plus');plus.setAttribute('aria-label','Dienst toevoegen voor '+(namen[id]||'medewerker')+' op '+nlDate(day));cell.append(plus);
+ if(ids.includes(id)){const plus=week24Button('+',async()=>{if(!weekId){const create=el('maakWeek');if(create.hidden||typeof create.onclick!=='function')throw Error('Deze roosterweek is nog niet beschikbaar.');await create.onclick();if(!weekId)return}week24Open(id,day,week24Copy?.d||null)},'secundair opr24plus');plus.setAttribute('aria-label','Dienst toevoegen voor '+(namen[id]||'medewerker')+' op '+nlDate(day));cell.append(plus);
  cell.classList.add('riv-drop-cell');const zones=maak('div',undefined,'riv-drop-zones');
  for(const [choice,label] of [['copy','Kopiëren'],['move','Verplaatsen']]){const zone=maak('div',label,'riv-drop-zone');zone.dataset.rivDrop=choice;zones.append(zone)}cell.append(zones);
  const geldig=()=>week24Drag?.key===key&&!week24Busy&&!(String(week24Drag.d.medewerker_id)===id&&lokaleDatum(week24Drag.d.begint_op)===day);
@@ -2062,10 +2062,10 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
   }
   const summary=settings.querySelector('summary');if(summary)summary.textContent='Openingstijden en roosterinstellingen';
  }
- const board=make('section',undefined,'riv-availability-board');
- board.append(make('h3','Weekrooster & beschikbaarheid'),make('p','Alle medewerkers zijn zichtbaar. Groen = beschikbaar, rood = niet beschikbaar; verlof wordt apart aangegeven.','subtiel'));
- const content=make('div','Rooster laden…','riv-avail-scroll');board.append(content);
- formBox.after(board);
+ // Keep a single roster matrix: status labels belong in the existing day cells.
+ const weekGrid=document.getElementById('week24');
+ const todayButton=document.getElementById('rivWeekToday');
+ if(weekGrid&&todayButton)todayButton.after(weekGrid);
  // Keep the existing database concept lifecycle, but don't force a concept-button workflow.
  const create=document.getElementById('maakWeek'),oldCreate=document.getElementById('rivWeekCreate');
  if(create)create.style.display='none';if(oldCreate)oldCreate.style.display='none';
@@ -2082,7 +2082,8 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
  async function render(){
   const token=++generation,loc=huidigeLocatie,week=maandag(document.getElementById('datum').value||nlToday());
   if(loc==null)return;
-  content.textContent='Beschikbaarheid ophalen…';
+  const table=week24Host.querySelector('table.opr24table');
+  if(!table)return;
   try{
    const until=verschuif(week,6);
    const [a,v]=await Promise.all([
@@ -2091,42 +2092,31 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
    ]);
    if(a.error)throw a.error;if(v.error)throw v.error;
    if(token!==generation||loc!==huidigeLocatie)return;
-   const employees=[...document.getElementById('medewerker').options].filter(o=>o.value).map(o=>({id:o.value,name:o.textContent}));
    const avail=new Map((a.data||[]).map(x=>[x.profiel_id+'|'+x.datum,x]));
    const leave=new Map((v.data||[]).filter(x=>x.status==='goedgekeurd'||x.status==='aangevraagd').map(x=>[x.profiel_id+'|'+x.datum,x]));
-   const shifts=huidigeDiensten||[];
-   const table=make('table'),head=make('thead'),hr=make('tr');hr.append(make('th','Medewerker'));
    const days=Array.from({length:7},(_,i)=>verschuif(week,i));
-   for(const day of days)hr.append(make('th',new Date(day+'T12:00:00Z').toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',timeZone:'Europe/Amsterdam'})));
-   head.append(hr);table.append(head);
-   const tbody=make('tbody');
-   for(const person of employees){
-    const tr=make('tr');tr.append(make('td',person.name));
-    for(const day of days){
-     const td=make('td'),key=person.id+'|'+day,av=avail.get(key),lv=leave.get(key);
+   for(const row of table.querySelectorAll('tr[data-riv-group-person]')){
+    const id=row.dataset.rivGroupPerson,cells=[...row.querySelectorAll(':scope > td')];
+    for(let index=0;index<days.length;index++){
+     const td=cells[index+1],key=id+'|'+days[index],av=avail.get(key),lv=leave.get(key);
+     if(!td)continue;
+     td.querySelectorAll('.riv-availability-status').forEach(x=>x.remove());
      let label='Niet opgegeven',cls='';
      if(av?.status==='beschikbaar'){label='Beschikbaar';cls='yes'}
      if(av?.status==='niet_beschikbaar'){label='Niet beschikbaar';cls='no'}
      if(av?.status==='gedeeltelijk'){label='Deels beschikbaar';cls='partial'}
      if(lv?.status==='aangevraagd'){label='Verlof aangevraagd';cls='pending'}
      if(lv?.status==='goedgekeurd'){label='Verlof · '+(lv.soort||'vrij');cls='leave'}
-     const state=make('span',label,'riv-availability-status '+cls);td.append(state);
-     for(const shift of shifts.filter(s=>String(s.medewerker_id)===String(person.id)&&lokaleDatum(s.begint_op)===day)){
-      const hh=t=>new Date(t).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'});
-      td.append(make('span',hh(shift.begint_op)+'–'+hh(shift.eindigt_op),'riv-availability-time'));
-     }
-     tr.append(td);
+     const state=make('span',label,'riv-availability-status '+cls);
+     const plus=td.querySelector('.opr24plus');if(plus)td.insertBefore(state,plus);else td.append(state);
     }
-    tbody.append(tr);
    }
-   if(!employees.length){const tr=make('tr'),td=make('td','Geen medewerkers aan deze locatie gekoppeld.');td.colSpan=8;tr.append(td);tbody.append(tr)}
-   table.append(tbody);content.replaceChildren(table);
-  }catch(e){if(token===generation)content.textContent='Beschikbaarheid kon niet worden geladen: '+(e.message||String(e))}
+  }catch(e){if(token===generation)status.textContent='Beschikbaarheid kon niet worden geladen: '+(e.message||String(e))}
  }
- const oldLoad=laadWeek;
- laadWeek=async function(){const result=await oldLoad.apply(this,arguments);await render();return result};
+ const oldRender=week24Render;
+ week24Render=function(){oldRender();void render()};
  const oldRefresh=rivVerversDiensten;
- rivVerversDiensten=async function(){const result=await oldRefresh.apply(this,arguments);await render();return result};
+ rivVerversDiensten=async function(){return await oldRefresh.apply(this,arguments)};
  if(!pane.hidden)render();
 })();
 </script>
