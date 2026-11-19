@@ -515,10 +515,25 @@ async function mpLoad(){
  for(let i=0;i<7;i++){
  const dag=verschuif(week,i),old=av.find(x=>x.datum===dag),req=vr.find(x=>x.datum===dag),card=maak('div',undefined,'dienst');card.append(maak('h3',planDag(dag)));
  const sel=maak('select');sel.setAttribute('aria-label','Beschikbaarheid '+dag);for(const k of ['','beschikbaar','niet_beschikbaar','gedeeltelijk']){const o=maak('option',planStatus[k]||'Nog niet doorgegeven');o.value=k;sel.append(o)}sel.value=old?.status||'';
- const van=maak('input'),tot=maak('input');van.type=tot.type='time';van.value=old?.van?.slice(0,5)||'09:00';tot.value=old?.tot?.slice(0,5)||'17:00';van.setAttribute('aria-label','Vanaf');tot.setAttribute('aria-label','Tot');const tijden=maak('div',undefined,'kolommen');tijden.append(van,tot);const sync=()=>{tijden.hidden=sel.value!=='gedeeltelijk'};sel.onchange=sync;sync();
- const dagOpen=open&&dag>=nu.slice(0,10);const save=maak('button',dagOpen?'Beschikbaarheid opslaan':'Beschikbaarheid gesloten','klein');save.disabled=!dagOpen;sel.disabled=van.disabled=tot.disabled=!dagOpen;
- planAct(save,async()=>{if(!sel.value)throw Error('Kies je beschikbaarheid.');const part=sel.value==='gedeeltelijk';if(part&&(!van.value||!tot.value||van.value>=tot.value))throw Error('Controleer de tijden.');planCheck(await db.from('planning_beschikbaarheid').upsert({locatie_id:loc,profiel_id:user.id,datum:dag,status:sel.value,van:part?van.value:null,tot:part?tot.value:null},{onConflict:'locatie_id,profiel_id,datum'}).select('datum').single());await mpLoad();el('mpMsg').textContent='Beschikbaarheid opgeslagen.'},'mpMsg');
- card.append(sel,tijden,save);el('mpDays').append(card);nlField(van);nlField(tot);
+ const van=maak('input'),tot=maak('input');van.type=tot.type='time';van.value=old?.van?.slice(0,5)||'09:00';tot.value=old?.tot?.slice(0,5)||'17:00';van.setAttribute('aria-label','Vanaf');tot.setAttribute('aria-label','Tot');const tijden=maak('div',undefined,'kolommen');tijden.append(van,tot);const sync=()=>{tijden.hidden=sel.value!=='gedeeltelijk'};sync();
+ const dagOpen=open&&dag>=nu.slice(0,10);sel.disabled=van.disabled=tot.disabled=!dagOpen;
+ const feedback=maak('small',dagOpen?'Wijzig een keuze om automatisch op te slaan.':'Beschikbaarheid gesloten.','subtiel');
+ feedback.setAttribute('role','status');let saveQueue=Promise.resolve(),saveVersion=0;
+ const autoSave=()=>{
+  if(!dagOpen)return;
+  const part=sel.value==='gedeeltelijk',status=sel.value,from=van.value,to=tot.value,revision=++saveVersion;
+  if(!status){feedback.textContent='Kies een beschikbaarheid.';return}
+  if(part&&(!from||!to||from>=to)){feedback.textContent='Vul eerst geldige begin- en eindtijden in.';return}
+  const payload={locatie_id:loc,profiel_id:user.id,datum:dag,status,van:part?from:null,tot:part?to:null};
+  feedback.textContent='Opslaan…';
+  saveQueue=saveQueue.catch(()=>{}).then(async()=>{
+   const result=await db.from('planning_beschikbaarheid').upsert(payload,{onConflict:'locatie_id,profiel_id,datum'}).select('datum').single();
+   if(result.error)throw result.error;
+   if(revision===saveVersion&&gen===mpGeneration)feedback.textContent='✓ Automatisch opgeslagen';
+  }).catch(e=>{if(revision===saveVersion&&gen===mpGeneration)feedback.textContent='Niet opgeslagen: '+(e.message||String(e))});
+ };
+ sel.onchange=()=>{sync();autoSave()};van.onchange=autoSave;tot.onchange=autoSave;
+ card.append(sel,tijden,feedback);el('mpDays').append(card);nlField(van);nlField(tot);
  }
 }
 async function plLoad(){
@@ -2113,6 +2128,16 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
  const oldRefresh=rivVerversDiensten;
  rivVerversDiensten=async function(){const result=await oldRefresh.apply(this,arguments);await render();return result};
  if(!pane.hidden)render();
+})();
+</script>
+<script>
+// Keep the visible shell footer consistent with the actual application version.
+(()=>{
+ const update=()=>{const footer=document.querySelector('.riv-shell-foot');if(!footer)return false;footer.textContent='Rivame Personeel · '+RIVAME_VERSION;return true};
+ if(!update()){
+  const observer=new MutationObserver(()=>{if(update())observer.disconnect()});
+  observer.observe(document.body,{childList:true,subtree:true});
+ }
 })();
 </script>
 </body>
