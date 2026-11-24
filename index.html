@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.24';
+const RIVAME_VERSION = '4.0-alpha.25';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1350,7 +1350,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  ];
  const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.24</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.25</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1752,7 +1752,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 @media(max-width:560px){.riv-alpha17-shifts{padding:15px!important}.riv-hours-stats{gap:6px}.riv-hours-stat{padding:10px 8px}.riv-hours-stat span{font-size:.69rem}.riv-hours-row{padding:13px!important;gap:8px!important}.riv-hours-badge{font-size:.69rem;padding:7px 8px;max-width:49%}}
 </style>
 <script>
-/* Rivame 4.0-alpha.24 — published roster shifts in Mijn uren.
+/* Rivame 4.0-alpha.25 — published roster shifts in Mijn uren.
    Complements existing (legacy) clock registrations without changing them. */
 (()=>{
   const panel=document.getElementById('rivameClockPanel');
@@ -2496,7 +2496,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 })();
 </script>
 <style>
-/* Rivame 4.0-alpha.24: HR werkvoorraad boven bestaande HR-onderdelen */
+/* Rivame 4.0-alpha.25: HR werkvoorraad boven bestaande HR-onderdelen */
 .riv-hr24{margin:15px 0 23px;padding:18px;border:1px solid #d6e6e2;border-radius:16px;background:#f7fbfa;color:#123543}
 .riv-hr24[hidden]{display:none!important}
 .riv-hr24-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}
@@ -2576,6 +2576,52 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
  }
  const observer=new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;attach()})});
  observer.observe(container,{childList:true,subtree:true});setTimeout(attach,0);
+})();
+</script>
+<style>
+/* alpha.25 — in-app terugnavigatie op desktop, tablet en mobiel */
+.riv-backbar25{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 16px;padding:0 0 12px;border-bottom:1px solid #dce5e8}
+.riv-backbar25 button{min-height:38px;padding:8px 13px!important;border-radius:9px;font-size:13px;font-weight:700;white-space:normal}
+.riv-backbar25 button:first-child{background:#e3f5f2!important;color:#123543!important;border:1px solid #8bcbbd!important}
+.riv-backbar25 button:last-child{background:#e7eff1!important;color:#123543!important}
+.riv-backbar25[hidden]{display:none!important}
+</style>
+<script>
+/* Browser-geschiedenis is geen applicatienavigatie. Bied expliciete knoppen
+   binnen het scherm aan, behoud de bestaande routes, rollen en gegevens. */
+(()=>{
+ const container=document.querySelector('.container');if(!container)return;
+ const makeButton=(title,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=title;b.onclick=fn;return b};
+ function dashboard(){
+  for(const p of document.querySelectorAll('.riv-hr-page:not([hidden])'))p.close?.();
+  window.rivameSluitUren?.();window.rivameNaarDashboard?.();
+  window.scrollTo({top:0,behavior:'smooth'});
+ }
+ function goHR(){
+  for(const p of document.querySelectorAll('.riv-hr-page:not([hidden])'))p.close?.();
+  window.rivameSluitUren?.();
+  if(rivHRRoutes?.dashboard?.open)rivHRRoutes.dashboard.open();else dashboard();
+ }
+ function update(){
+  for(const page of container.querySelectorAll('.riv-hr-page:not([hidden])')){
+   if(page.querySelector('.riv-backbar25'))continue;
+   const heading=page.querySelector('h2')?.textContent||'';
+   const onOverview=heading.trim()==='HR · Dashboard';
+   const bar=document.createElement('nav');bar.className='riv-backbar25';bar.setAttribute('aria-label','Terug navigeren binnen Rivame');
+   if(!onOverview)bar.append(makeButton('← Terug naar HR-overzicht',goHR));
+   bar.append(makeButton('⌂ Terug naar dashboard',dashboard));
+   page.prepend(bar);
+  }
+  const hours=document.getElementById('rivameClockPanel');
+  if(hours&&!hours.hidden&&!hours.querySelector('.riv-backbar25')){
+   const bar=document.createElement('nav');bar.className='riv-backbar25';bar.setAttribute('aria-label','Terug navigeren binnen Rivame');
+   if(gebruikersRol!=='medewerker')bar.append(makeButton('← Terug naar HR-overzicht',goHR));
+   bar.append(makeButton('⌂ Terug naar dashboard',dashboard));hours.prepend(bar);
+  }
+ }
+ let pending=false;const observer=new MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;update()})});
+ observer.observe(container,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden']});
+ setTimeout(update,0);
 })();
 </script>
 </body>
