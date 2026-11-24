@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.35';
+const RIVAME_VERSION = '4.0-alpha.36';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1351,7 +1351,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  ];
  const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.35</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.36</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1770,7 +1770,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 @media(max-width:560px){.riv-alpha17-shifts{padding:15px!important}.riv-hours-stats{gap:6px}.riv-hours-stat{padding:10px 8px}.riv-hours-stat span{font-size:.69rem}.riv-hours-row{padding:13px!important;gap:8px!important}.riv-hours-badge{font-size:.69rem;padding:7px 8px;max-width:49%}}
 </style>
 <script>
-/* Rivame 4.0-alpha.35 — published roster shifts in Mijn uren.
+/* Rivame 4.0-alpha.36 — published roster shifts in Mijn uren.
    Complements existing (legacy) clock registrations without changing them. */
 (()=>{
   const panel=document.getElementById('rivameClockPanel');
@@ -2529,7 +2529,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 })();
 </script>
 <style>
-/* Rivame 4.0-alpha.35: HR werkvoorraad boven bestaande HR-onderdelen */
+/* Rivame 4.0-alpha.36: HR werkvoorraad boven bestaande HR-onderdelen */
 .riv-hr24{margin:15px 0 23px;padding:18px;border:1px solid #d6e6e2;border-radius:16px;background:#f7fbfa;color:#123543}
 .riv-hr24[hidden]{display:none!important}
 .riv-hr24-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}
@@ -2749,7 +2749,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 .riv-sys29 h3{margin:0 0 7px;font-size:21px}.riv-sys29 p{margin:7px 0 14px;color:#547078}
 .riv-sys29-context{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
 .riv-sys29-pill{display:inline-flex;align-items:center;padding:8px 11px;border-radius:30px;background:#e5f4ee;border:1px solid #cce8de;color:#145f52;font-size:13px;font-weight:650}
-.riv-sys29-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.riv-sys29-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
 .riv-sys29-card{background:#fff;border:1px solid #dae8e4;border-radius:12px;padding:16px;min-width:0}
 .riv-sys29-card strong{display:block;font-size:16px;margin-bottom:6px}.riv-sys29-card small{display:block;color:#58717a;line-height:1.5}
 .riv-sys29-status{font-size:12px;font-weight:700;color:#168d80;margin-top:10px}
@@ -2761,8 +2761,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 @media(max-width:530px){.riv-sys29-grid{grid-template-columns:1fr}.riv-sys29-card{padding:13px}}
 </style>
 <script>
-/* Modulekaart toont alleen bestaande functies als actief; Hotel en Kassa
-   worden pas ingeschakeld zodra hun database en rechten echt beschikbaar zijn. */
+/* Alleen werkende functies tonen: ontwikkelmodules horen niet op klantenschermen. */
 (()=>{
  const host=document.getElementById('beheerPane'),tab=document.getElementById('tabBeheer');
  if(!host||!tab)return;
@@ -2776,17 +2775,13 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
  const grid=document.createElement('div');grid.className='riv-sys29-grid';
  for(const [name,description,status] of [
   ['Personeel','Roosters, uren, contracten en HR','Beschikbaar'],
-  ['Locatiebeheer','Bestaande beheerfuncties hieronder','Beschikbaar'],
-  ['Hotel','Kamers, gasten en reserveringen','In voorbereiding'],
-  ['Kassa','Verkoop, tafels en betalingen','In voorbereiding'],
-  ['Support','Centrale tickets en gecontroleerde ondersteuning','In voorbereiding'],
-  ['Modulebeheer','Per bedrijf modules en rechten activeren','In voorbereiding']
+  ['Locatiebeheer','Bestaande beheerfuncties hieronder','Beschikbaar']
  ]){const card=document.createElement('div');card.className='riv-sys29-card';
   const title=document.createElement('strong');title.textContent=name;
   const desc=document.createElement('small');desc.textContent=description;
   const state=document.createElement('div');state.className='riv-sys29-status';state.textContent=status;
   if(status!=='Beschikbaar')state.style.color='#657781';card.append(title,desc,state);grid.append(card)}
- const note=document.createElement('p');note.style.fontSize='12px';note.textContent='Modules die nog in voorbereiding zijn, zijn bewust niet aanklikbaar. Toegang tot Personeel blijft via bestaande serverrechten geregeld.';
+ const note=document.createElement('p');note.style.fontSize='12px';note.textContent='Dit overzicht toont alleen de beschikbare onderdelen. Toegang blijft afhankelijk van de bevoegdheden van je account.';
  const settings=document.createElement('div');settings.className='riv-sys32-settings';
  const sHead=document.createElement('h4');sHead.textContent='Personeel · instellingen per bedrijf';
  const sIntro=document.createElement('p');sIntro.textContent='Deze instellingen werken met de bestaande beveiligde Supabase-functies.';
@@ -2885,7 +2880,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
    for(const l of locations)boxes[0].append(row(l.naam||'Locatie',l.actief?'Actief':'Inactief'));
    for(const m of members)boxes[1].append(row(m.naam||'Medewerker',(m.rol||'geen rol')+' · '+(m.actief?'actief':'inactief')));
    const labels={personeel:'Personeel',hotel:'Hotel',kassa:'Kassa',support:'Support'};
-   for(const m of modules)boxes[2].append(row(labels[m.code]||m.code,m.actief&&m.beschikbaar?'Actief':m.beschikbaar?'Beschikbaar, niet actief':'In voorbereiding'));
+   for(const m of modules.filter(x=>x.actief===true&&x.beschikbaar===true))boxes[2].append(row(labels[m.code]||m.code,'Actief'));
    for(const [i,items] of [locations,members,modules].entries())if(!items.length)boxes[i].append(row('Geen gegevens geregistreerd'));
    message.textContent=(info.platformbeheerder?'Platformbeheerder':'Bedrijfsbeheerder')+' · '+locations.length+' locatie(s) · '+members.length+' bedrijfsleden.';
   }catch(e){if(token===serial)message.textContent='Centraal beheer niet beschikbaar: '+(e.message||String(e))}
