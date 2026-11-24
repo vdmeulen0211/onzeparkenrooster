@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.26';
+const RIVAME_VERSION = '4.0-alpha.27';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1350,7 +1350,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  ];
  const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.26</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.27</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1764,7 +1764,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 @media(max-width:560px){.riv-alpha17-shifts{padding:15px!important}.riv-hours-stats{gap:6px}.riv-hours-stat{padding:10px 8px}.riv-hours-stat span{font-size:.69rem}.riv-hours-row{padding:13px!important;gap:8px!important}.riv-hours-badge{font-size:.69rem;padding:7px 8px;max-width:49%}}
 </style>
 <script>
-/* Rivame 4.0-alpha.26 — published roster shifts in Mijn uren.
+/* Rivame 4.0-alpha.27 — published roster shifts in Mijn uren.
    Complements existing (legacy) clock registrations without changing them. */
 (()=>{
   const panel=document.getElementById('rivameClockPanel');
@@ -2508,7 +2508,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 })();
 </script>
 <style>
-/* Rivame 4.0-alpha.26: HR werkvoorraad boven bestaande HR-onderdelen */
+/* Rivame 4.0-alpha.27: HR werkvoorraad boven bestaande HR-onderdelen */
 .riv-hr24{margin:15px 0 23px;padding:18px;border:1px solid #d6e6e2;border-radius:16px;background:#f7fbfa;color:#123543}
 .riv-hr24[hidden]{display:none!important}
 .riv-hr24-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}
@@ -2541,19 +2541,25 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
   const locLabel=make('label','Locatie'),loc=make('select');loc.setAttribute('aria-label','HR-locatie kiezen');locLabel.append(loc);head.append(title,locLabel);
   const grid=make('div',undefined,'riv-hr24-grid'),status=make('p','Locaties en HR-rechten controleren…','riv-hr24-state');status.setAttribute('role','status');
   box.append(head,grid,make('p','Geplande uren, geregistreerde uren en goedgekeurde uren zijn verschillende waarden. Een roosterverschil is géén officieel contractueel plus-/minsaldo. Verlofsaldi en ziekte-uren vereisen de bestaande HR-regels en autorisatie.','riv-hr24-info'),status);
-  const nav=page.querySelector('.riv-hr-nav');if(nav?.parentElement)nav.parentElement.after(box);else page.append(box);
+  const nav=page.querySelector('.riv-hr-nav');if(nav?.parentElement){nav.parentElement.after(box);nav.parentElement.hidden=true}else page.append(box);
   const cards=[
    ['vrij','Verlofaanvragen','Openstaande verlofdagen','Afwezigheid openen'],
    ['uren','Urenbeoordeling','Afgesloten diensten','Urenregistratie openen'],
-   ['contract','Contracten','Vaste uren · Min-max · Oproep','Medewerkers openen'],
-   ['ziek','Ziekmeldingen','Beheer via het HR-dossier','Medewerkers openen'],
+   ['contract','Contracten','Vaste uren · Min-max · Oproep','Contractenoverzicht openen'],
+   ['ziek','Ziekmeldingen','Beheer via het HR-dossier','Ziekmeldingen openen'],
    ['saldo','Plus- en minuren','Op basis van HR-urenboek','Plus-/minuren openen'],
    ['rapport','Rapportages','Gepland · gewerkt · goedgekeurd','Rapportages openen']
   ];
   const outputs={};for(const [key,label,caption,buttonText] of cards){const card=make('div',undefined,'riv-hr24-card');card.append(make('h4',label));const val=make('div',key==='vrij'||key==='uren'?'—':'Overzicht','riv-hr24-value');val.dataset.key=key;const desc=make('p',caption),btn=make('button',buttonText,'secundair');btn.type='button';btn.onclick=()=>{
     if(key==='vrij'){page.close();document.querySelector('[data-route="rooster"]')?.click();document.getElementById('tabAfw')?.click();}
-    else if(key==='uren')rivHRRoutes.urenbeheer?.open?.();
-    else if(key==='saldo')rivHRRoutes.contractweek?.open?.();
+    else if(key==='uren'||key==='saldo'){
+     page.close();document.body.classList.remove('riv-hr-workspace','riv-shell-profile','riv-shell-messages');
+     document.body.classList.add('riv-shell-at-home','riv-shell-hours');
+     const route=key==='uren'?rivHRRoutes.urenbeheer:rivHRRoutes.contractweek;
+     if(route?.open)route.open();else window.rivameNaarDashboard?.();
+    }
+    else if(key==='contract')rivHRRoutes.contractenOverzicht?.open?.(loc.value);
+    else if(key==='ziek')rivHRRoutes.ziekmeldingenOverzicht?.open?.(loc.value);
     else if(key==='rapport')rivHRRoutes.rapportages?.open?.();
     else rivHRRoutes.medewerkers?.open?.();
    };card.append(val,desc,btn);grid.append(card);outputs[key]=val}
@@ -2634,6 +2640,66 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
  let pending=false;const observer=new MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;update()})});
  observer.observe(container,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden']});
  setTimeout(update,0);
+})();
+</script>
+<style>
+/* alpha.27: aparte HR-overzichten vanaf de tegels */
+.riv-hr27-list{display:grid;gap:10px;margin:14px 0}
+.riv-hr27-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border:1px solid #dce7e6;border-left:4px solid #168d80;border-radius:11px;padding:14px;background:#fff}
+.riv-hr27-row strong{display:block;color:#123543;margin-bottom:4px}
+.riv-hr27-row small{color:#5c7077;font-size:12px;line-height:1.5}
+.riv-hr27-row button{min-height:36px;padding:8px 11px;font-size:13px}
+.riv-hr27-intro{color:#526b74;font-size:14px}
+.riv-hr27-find{margin:14px 0;max-width:520px}
+</style>
+<script>
+/* Een ziekmelding bevat gevoelige gegevens: dit overzicht toont alleen namen
+   binnen de gekozen locatie; details uitsluitend via bestaande HR-dossierroute. */
+(()=>{
+ if(typeof rivHRRoutes==='undefined'||typeof rivInlinePage!=='function')return;
+ const create=(tag,value,cls)=>{const e=document.createElement(tag);if(value!==undefined)e.textContent=value;if(cls)e.className=cls;return e};
+ function makeOverview(kind){
+  const page=rivInlinePage();let seq=0;
+  async function open(locationId){
+   const token=++seq;page.replaceChildren();page.showModal();
+   const title=kind==='contract'?'Contractenoverzicht':'Ziekmeldingenoverzicht';
+   const header=create('div',undefined,'weekrij');header.append(create('h2','HR · '+title));
+   const close=create('button','Sluiten','secundair klein');close.type='button';close.onclick=()=>page.close();header.append(close);page.append(header);
+   const intro=create('p',kind==='contract'?'Bekijk contractvorm, looptijd en de medewerker bij wie je het contract kunt openen.':'Kies een medewerker om diens ziekmeldingen via het beveiligde HR-dossier te beheren. Er worden hier geen medische of ziekteregistratiegegevens getoond.','riv-hr27-intro');
+   const search=create('input');search.type='search';search.placeholder='Zoek medewerker';search.setAttribute('aria-label','Zoek medewerker');search.className='riv-hr27-find';
+   const status=create('p','Medewerkers laden…','subtiel');status.setAttribute('role','status');const list=create('div',undefined,'riv-hr27-list');page.append(intro,search,status,list);
+   try{
+    const auth=await db.rpc('rivame_mag_hr');if(auth.error||auth.data!==true)throw Error('Geen HR-toegang voor deze gegevens.');
+    const loc=Number(locationId||huidigeLocatie);if(!loc)throw Error('Kies eerst een locatie in het HR-dashboard.');
+    const {data:links,error:linkError}=await db.from('profiel_locaties').select('profiel_id').eq('locatie_id',loc).limit(2000);
+    if(linkError)throw linkError;const ids=[...new Set((links||[]).map(x=>x.profiel_id))];
+    if(!page.open||token!==seq)return;
+    if(!ids.length){status.textContent='Geen medewerkers gekoppeld aan deze locatie.';return}
+    const people=[];for(let i=0;i<ids.length;i+=100){const r=await db.from('profielen').select('id,naam').in('id',ids.slice(i,i+100));if(r.error)throw r.error;people.push(...(r.data||[]))}
+    let contracts=[];
+    if(kind==='contract'){for(let i=0;i<ids.length;i+=100){const r=await db.from('rivame_arbeidscontracten').select('*').in('profiel_id',ids.slice(i,i+100)).order('begindatum',{ascending:false}).limit(2000);if(r.error)throw r.error;contracts.push(...(r.data||[]))}}
+    if(!page.open||token!==seq)return;
+    const latest=new Map();for(const c of contracts)if(!latest.has(c.profiel_id))latest.set(c.profiel_id,c);
+    const names=people.sort((a,b)=>(a.naam||'').localeCompare(b.naam||'','nl'));
+    const formName={vaste_uren:'Vaste uren',min_max:'Min-max',oproep:'Oproep / 0 uren'};
+    function draw(){list.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const visible=names.filter(x=>(x.naam||'').toLocaleLowerCase('nl-NL').includes(q));
+     status.textContent=visible.length+' medewerker(s) · '+(kind==='contract'?'contractstatus per medewerker':'open het dossier voor ziekteadministratie');
+     for(const p of visible){const row=create('div',undefined,'riv-hr27-row'),text=create('div');text.append(create('strong',p.naam||'Medewerker'));
+      if(kind==='contract'){const c=latest.get(p.id);const summary=c?(formName[c.contractvorm]||c.contractvorm||'Contract'):'Nog geen contract gevonden';
+       const span=c?[summary,c.einddatum?'Eindigt '+new Date(c.einddatum+'T12:00:00').toLocaleDateString('nl-NL'):'Onbepaalde/geen einddatum',c.status||''].join(' · '):'Nog geen contract gevonden';text.append(create('small',span))}
+      else text.append(create('small','Ziekmeldingen in beveiligd personeelsdossier'));
+      const button=create('button',kind==='contract'?'Contract openen':'Ziekmeldingen openen','secundair klein');button.type='button';button.onclick=()=>{
+       rivSelected=p.id;rivSelectedName=p.naam||'Medewerker';page.close();
+       const route=kind==='contract'?rivHRRoutes.contract:rivHRRoutes.ziek;
+       if(route?.open)void Promise.resolve(route.open()).catch(e=>alert(e.message||String(e)));
+      };row.append(text,button);list.append(row)}
+    }search.oninput=draw;draw();
+   }catch(e){if(page.open&&token===seq)status.textContent='Overzicht niet beschikbaar: '+(e.message||String(e))}
+  }
+  page.addEventListener('close',()=>{++seq});return {dialog:page,open};
+ }
+ rivHRRoutes.contractenOverzicht=makeOverview('contract');
+ rivHRRoutes.ziekmeldingenOverzicht=makeOverview('ziek');
 })();
 </script>
 </body>
