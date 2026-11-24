@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.32';
+const RIVAME_VERSION = '4.0-alpha.33';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -502,12 +502,13 @@ async function mpLoad(){
  el('mpDays').replaceChildren();el('mpAfwLijst').replaceChildren();el('mpMsg').textContent='';el('mpDead').textContent='Laden...';
  if(!loc){el('mpDead').textContent='Geen locatie toegewezen.';return}
  const {data:{user},error}=await db.auth.getUser();if(error||!user)throw Error('Log opnieuw in.');
- const [d,a,v]=await Promise.all([
+ const [d,a,v,permission]=await Promise.all([
  db.rpc('planning_effectieve_deadlines',{p_locatie:loc,p_week:week}).maybeSingle(),
  db.from('planning_beschikbaarheid').select('*').eq('locatie_id',loc).eq('profiel_id',user.id).gte('datum',week).lte('datum',verschuif(week,6)),
- db.from('planning_vrij').select('*').eq('locatie_id',loc).eq('profiel_id',user.id).gte('datum',week).lte('datum',verschuif(week,6))]);
- const dead=planCheck(d),av=planCheck(a),vr=planCheck(v);if(gen!==mpGeneration)return;
- el('mpDead').textContent='Beschikbaarheid: '+mooiDeadline(dead?.beschikbaar_tot)+' | Vrij vragen: '+mooiDeadline(dead?.vrij_tot);
+ db.from('planning_vrij').select('*').eq('locatie_id',loc).eq('profiel_id',user.id).gte('datum',week).lte('datum',verschuif(week,6)),
+ db.rpc('rivame_beschikbaarheid_toegestaan',{p_locatie_id:loc})]);
+ const dead=planCheck(d),av=planCheck(a),vr=planCheck(v),canSelf=planCheck(permission)===true;if(gen!==mpGeneration)return;
+ el('mpDead').textContent=(canSelf?'Beschikbaarheid: '+mooiDeadline(dead?.beschikbaar_tot):'Zelf beschikbaarheid aanpassen is voor dit bedrijf uitgeschakeld.')+' | Vrij vragen: '+mooiDeadline(dead?.vrij_tot);
  const nu=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date()).replace(' ','T');
  const open=!!dead&&nu<dead.beschikbaar_tot;
  el('afwVan').value=week;el('afwTot').value=week;
@@ -516,8 +517,8 @@ async function mpLoad(){
  const dag=verschuif(week,i),old=av.find(x=>x.datum===dag),req=vr.find(x=>x.datum===dag),card=maak('div',undefined,'dienst');card.append(maak('h3',planDag(dag)));
  const sel=maak('select');sel.setAttribute('aria-label','Beschikbaarheid '+dag);for(const k of ['','beschikbaar','niet_beschikbaar','gedeeltelijk']){const o=maak('option',planStatus[k]||'Nog niet doorgegeven');o.value=k;sel.append(o)}sel.value=old?.status||'';
  const van=maak('input'),tot=maak('input');van.type=tot.type='time';van.value=old?.van?.slice(0,5)||'09:00';tot.value=old?.tot?.slice(0,5)||'17:00';van.setAttribute('aria-label','Vanaf');tot.setAttribute('aria-label','Tot');const tijden=maak('div',undefined,'kolommen');tijden.append(van,tot);const sync=()=>{tijden.hidden=sel.value!=='gedeeltelijk'};sync();
- const dagOpen=open&&dag>=nu.slice(0,10);sel.disabled=van.disabled=tot.disabled=!dagOpen;
- const feedback=maak('small',dagOpen?'Wijzig een keuze om automatisch op te slaan.':'Beschikbaarheid gesloten.','subtiel');
+ const dagOpen=canSelf&&open&&dag>=nu.slice(0,10);sel.disabled=van.disabled=tot.disabled=!dagOpen;
+ const feedback=maak('small',dagOpen?'Wijzig een keuze om automatisch op te slaan.':(!canSelf?'Wijzigen is door het bedrijf uitgeschakeld.':'Beschikbaarheid gesloten.'),'subtiel');
  feedback.setAttribute('role','status');let saveQueue=Promise.resolve(),saveVersion=0;
  const autoSave=()=>{
   if(!dagOpen)return;
@@ -1350,7 +1351,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  ];
  const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.32</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.33</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1769,7 +1770,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 @media(max-width:560px){.riv-alpha17-shifts{padding:15px!important}.riv-hours-stats{gap:6px}.riv-hours-stat{padding:10px 8px}.riv-hours-stat span{font-size:.69rem}.riv-hours-row{padding:13px!important;gap:8px!important}.riv-hours-badge{font-size:.69rem;padding:7px 8px;max-width:49%}}
 </style>
 <script>
-/* Rivame 4.0-alpha.32 — published roster shifts in Mijn uren.
+/* Rivame 4.0-alpha.33 — published roster shifts in Mijn uren.
    Complements existing (legacy) clock registrations without changing them. */
 (()=>{
   const panel=document.getElementById('rivameClockPanel');
@@ -2528,7 +2529,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 })();
 </script>
 <style>
-/* Rivame 4.0-alpha.32: HR werkvoorraad boven bestaande HR-onderdelen */
+/* Rivame 4.0-alpha.33: HR werkvoorraad boven bestaande HR-onderdelen */
 .riv-hr24{margin:15px 0 23px;padding:18px;border:1px solid #d6e6e2;border-radius:16px;background:#f7fbfa;color:#123543}
 .riv-hr24[hidden]{display:none!important}
 .riv-hr24-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}
@@ -2791,26 +2792,28 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
  const sIntro=document.createElement('p');sIntro.textContent='Deze instellingen werken met de bestaande beveiligde Supabase-functies.';
  const editLabel=document.createElement('label'),edit=document.createElement('input');edit.type='checkbox';editLabel.append(edit,document.createTextNode('Medewerkers mogen eigen uren aanpassen'));
  const clockLabel=document.createElement('label'),clock=document.createElement('input');clock.type='checkbox';clockLabel.append(clock,document.createTextNode('Vrijwillig inklokken beschikbaar'));
+ const availabilityLabel=document.createElement('label'),availability=document.createElement('input');availability.type='checkbox';availabilityLabel.append(availability,document.createTextNode('Medewerkers mogen zelf hun beschikbaarheid instellen'));
  const save=document.createElement('button');save.type='button';save.className='secundair';save.textContent='Instellingen opslaan';
  const status=document.createElement('p');status.setAttribute('role','status');status.textContent='Selecteer een locatie om instellingen te laden.';
- settings.append(sHead,sIntro,editLabel,clockLabel,save,status);section.append(head,intro,ctx,grid,note,settings);host.prepend(section);
+ settings.append(sHead,sIntro,editLabel,clockLabel,availabilityLabel,save,status);section.append(head,intro,ctx,grid,note,settings);host.prepend(section);
  let request=0;
  let loadedCompany=null;
- async function loadSettings(companyId,token){loadedCompany=null;save.disabled=true;edit.disabled=clock.disabled=true;status.textContent='Bedrijfsinstellingen laden…';
+ async function loadSettings(companyId,token){loadedCompany=null;save.disabled=true;edit.disabled=clock.disabled=availability.disabled=true;status.textContent='Bedrijfsinstellingen laden…';
   try{if(!companyId)throw Error('Er is geen bedrijf gekoppeld aan deze locatie.');
-   const r=await db.rpc('rivame_uren_bedrijf_instellingen_ophalen',{p_bedrijf_id:Number(companyId)});
-   if(token!==request)return;if(r.error)throw r.error;
-   edit.checked=!!r.data?.[0]?.medewerkers_mogen_wijzigen;clock.checked=!!r.data?.[0]?.inklokken_beschikbaar;
-   loadedCompany=Number(companyId);save.disabled=false;edit.disabled=clock.disabled=false;status.textContent='Instellingen geladen voor dit bedrijf.';
+   const [r,a]=await Promise.all([db.rpc('rivame_uren_bedrijf_instellingen_ophalen',{p_bedrijf_id:Number(companyId)}),db.rpc('rivame_beschikbaarheid_toegestaan',{p_locatie_id:Number(huidigeLocatie)})]);
+   if(token!==request)return;if(r.error)throw r.error;if(a.error)throw a.error;
+   edit.checked=!!r.data?.[0]?.medewerkers_mogen_wijzigen;clock.checked=!!r.data?.[0]?.inklokken_beschikbaar;availability.checked=a.data===true;
+   loadedCompany=Number(companyId);save.disabled=false;edit.disabled=clock.disabled=availability.disabled=false;status.textContent='Instellingen geladen voor dit bedrijf.';
   }catch(e){if(token===request)status.textContent='Instellingen niet beschikbaar: '+(e.message||String(e))}
  }
  save.onclick=async()=>{if(!loadedCompany)return;const companyId=loadedCompany;save.disabled=true;status.textContent='Instellingen opslaan…';
   try{const r=await db.rpc('rivame_uren_bedrijf_instellen',{p_bedrijf_id:companyId,p_medewerkers_mogen_wijzigen:edit.checked,p_inklokken_beschikbaar:clock.checked});
-   if(r.error)throw r.error;if(loadedCompany===companyId)status.textContent='Bedrijfsinstellingen opgeslagen.';
+   if(r.error)throw r.error;const a=await db.rpc('rivame_beschikbaarheid_instellen',{p_bedrijf_id:companyId,p_medewerkers_mogen_wijzigen:availability.checked});
+   if(a.error)throw a.error;if(loadedCompany===companyId)status.textContent='Bedrijfsinstellingen opgeslagen.';
   }catch(e){if(loadedCompany===companyId)status.textContent='Opslaan mislukt: '+(e.message||String(e))}finally{save.disabled=loadedCompany!==companyId}
  };
  async function refresh(){if(gebruikersRol!=='beheerder')return;const token=++request;
-  const id=Number(huidigeLocatie);loadedCompany=null;save.disabled=edit.disabled=clock.disabled=true;status.textContent='Instellingen worden geladen zodra het bedrijf bekend is.';company.textContent='Bedrijf: laden…';location.textContent='Locatie: laden…';
+  const id=Number(huidigeLocatie);loadedCompany=null;save.disabled=edit.disabled=clock.disabled=availability.disabled=true;status.textContent='Instellingen worden geladen zodra het bedrijf bekend is.';company.textContent='Bedrijf: laden…';location.textContent='Locatie: laden…';
   if(!id){company.textContent='Bedrijf: onbekend';location.textContent='Kies eerst een locatie';status.textContent='Selecteer eerst een locatie.';return}
   try{const result=await db.from('locaties').select('id,naam,bedrijf_id').eq('id',id).maybeSingle();
    if(token!==request)return;if(result.error)throw result.error;
