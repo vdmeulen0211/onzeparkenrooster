@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.20';
+const RIVAME_VERSION = '4.0-alpha.23';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -556,7 +556,25 @@ const oudDash160=toonDashboard;toonDashboard=async function(){++mpGeneration;++p
 
 function mpTab(v){el('mpDays').hidden=v;el('mpAfw').hidden=!v;el('mpTabBesch').className=v?'secundair':'';el('mpTabVrij').className=v?'':'secundair';}
 el('mpTabBesch').onclick=()=>mpTab(false);el('mpTabVrij').onclick=()=>mpTab(true);
-el('mpAfwForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const loc=Number(el('mpLoc').value),van=el('afwVan').value,tot=el('afwTot').value;const {data:{user}}=await db.auth.getUser();if(!user||!loc||!van||!tot||tot<van||tot>verschuif(van,365))throw Error('Controleer locatie en periode (maximaal 366 dagen).');const rows=[];for(let d=van;d<=tot;d=verschuif(d,1))rows.push({locatie_id:loc,profiel_id:user.id,datum:d,soort:el('afwSoort').value});if(!confirm(afwSoortNaam(el('afwSoort').value)+' voor '+rows.length+' dag(en)?'))return;planCheck(await db.from('planning_vrij').insert(rows).select('datum'));el('mpWeek').value=van;await mpLoad();el('mpMsg').textContent='Aanvraag ingediend. Je roostermaker beoordeelt deze per dag.';}catch(err){el('mpMsg').textContent='Aanvraag niet opgeslagen: '+err.message+' (controleer deadline en bestaande aanvragen).';}finally{b.disabled=false}};
+el('mpAfwForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{
+ const loc=Number(el('mpLoc').value),van=el('afwVan').value,tot=el('afwTot').value;
+ const {data:{user}}=await db.auth.getUser();
+ if(!user||!loc||!van||!tot||tot<van||tot>verschuif(van,365))throw Error('Controleer locatie en periode (maximaal 366 dagen).');
+ const alleDagen=[];for(let d=van;d<=tot;d=verschuif(d,1))alleDagen.push(d);
+ // Behoud bestaande aanvragen en goedkeuringen; nooit stilzwijgend overschrijven.
+ const bestaand=planCheck(await db.from('planning_vrij').select('datum,status,soort').eq('locatie_id',loc).eq('profiel_id',user.id).gte('datum',van).lte('datum',tot));
+ const bezet=new Map(bestaand.map(x=>[x.datum,x]));
+ const ontbrekend=alleDagen.filter(d=>!bezet.has(d));
+ const dubbel=alleDagen.filter(d=>bezet.has(d));
+ const fmt=d=>new Date(d+'T12:00:00').toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+ if(!ontbrekend.length){el('mpMsg').textContent='Voor alle gekozen dagen bestaat al een aanvraag. Er is niets gewijzigd. Bekijk je aanvragen of neem contact op met je roostermaker.';el('mpWeek').value=van;await mpLoad();return}
+ const melding=afwSoortNaam(el('afwSoort').value)+' aanvragen voor '+ontbrekend.length+' dag(en)?'+(dubbel.length?'\n\n'+dubbel.length+' dag(en) hebben al een aanvraag ('+dubbel.slice(0,5).map(fmt).join(', ')+(dubbel.length>5?', …':'')+'). Deze laten we ongewijzigd.':'');
+ if(!confirm(melding))return;
+ const rows=ontbrekend.map(d=>({locatie_id:loc,profiel_id:user.id,datum:d,soort:el('afwSoort').value}));
+ planCheck(await db.from('planning_vrij').insert(rows).select('datum'));
+ el('mpWeek').value=van;await mpLoad();
+ el('mpMsg').textContent='Aanvraag ingediend voor '+rows.length+' dag(en).'+(dubbel.length?' '+dubbel.length+' bestaande dag(en) zijn niet veranderd.':'')+' Je roostermaker beoordeelt de nieuwe aanvraag.';
+}catch(err){el('mpMsg').textContent=err.code==='23505'?'Er is ondertussen al een aanvraag voor een van deze dagen gemaakt. Ververs het overzicht en probeer opnieuw.':'Aanvraag niet opgeslagen: '+err.message;}finally{b.disabled=false}};
 el('plStdForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const loc=huidigeLocatie;if(loc===null)throw Error('Kies een locatie.');planCheck(await db.from('planning_standaarden').upsert({locatie_id:loc,beschikbaar_weken:Number(el('plStdBesch').value),vrij_weken:Number(el('plStdVrij').value)},{onConflict:'locatie_id'}).select('locatie_id').single());await plLoad();el('plMsg').textContent='Standaard opgeslagen. Bestaande weekafwijkingen blijven gelden.';}catch(err){el('plMsg').textContent=err.message;}finally{b.disabled=false}};
 
 
@@ -1332,7 +1350,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  ];
  const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.20</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.23</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1429,6 +1447,40 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
    target.textContent=date+' · '+time(next.begint_op)+' – '+time(next.eindigt_op);
   }catch(e){if(request===nextShiftRequest&&intro.isConnected)target.textContent='Je volgende dienst kon niet worden opgehaald'}
  }
+ // Taakkaarten gebruiken alleen bestaande, via RLS toegankelijke gegevens.
+ // Geen aantallen verzinnen wanneer toegang of een query ontbreekt.
+ let actionRequest=0;
+ async function loadActionCounters(area){
+  const token=++actionRequest;
+  if(gebruikersRol==='medewerker'){
+   const elCount=area.querySelector('[data-action-count="vrij"]');
+   if(!elCount)return;
+   try{const {data:{user}}=await db.auth.getUser();if(!user)return;
+    const res=await db.from('planning_vrij').select('datum,status').eq('profiel_id',user.id).eq('status','aangevraagd').gte('datum',nlToday());
+    if(token===actionRequest&&elCount.isConnected)elCount.textContent=res.error?'Bekijk aanvragen':(res.data||[]).length+' dag(en) in behandeling';
+   }catch(e){if(token===actionRequest)elCount.textContent='Bekijk aanvragen'}
+   return;
+  }
+  if(!['planner','beheerder'].includes(gebruikersRol)||huidigeLocatie==null)return;
+  const loc=huidigeLocatie;
+  const update=(key,value)=>{const node=area.querySelector('[data-action-count="'+key+'"]');if(token===actionRequest&&loc===huidigeLocatie&&node?.isConnected)node.textContent=value};
+  const today=nlToday(),week=maandag(today);
+  try{
+   const [free,roster,clock]=await Promise.all([
+    db.from('planning_vrij').select('datum,status').eq('locatie_id',loc).eq('status','aangevraagd').gte('datum',today).limit(2000),
+    db.from('roosterweken').select('id,status').eq('locatie_id',loc).gte('week_start',week).limit(100),
+    db.from('rivame_klokdiensten').select('id,status').eq('locatie_id',loc).eq('status','afgesloten').is('verwijderd_op',null).limit(2000)
+   ]);
+   update('vrij',free.error?'Bekijk aanvragen':(free.data||[]).length+' dag(en) in behandeling');
+   update('rooster',roster.error?'Bekijk rooster':(roster.data||[]).filter(w=>w.status==='concept').length+' conceptwe(e)k(en)');
+   update('uren',clock.error?'Bekijk beoordelingen':(clock.data||[]).length+' afgesloten dienst(en)');
+   const weekIds=(roster.data||[]).filter(w=>w.status==='gepubliceerd').map(w=>w.id);
+   if(!weekIds.length){update('team',roster.error?'Bekijk team':'Geen gepubliceerde week');return}
+   const shifts=await db.from('diensten').select('medewerker_id,begint_op,eindigt_op').in('roosterweek_id',weekIds).limit(2000);
+   const people=new Set((shifts.data||[]).filter(d=>lokaleDatum(d.begint_op)===today).map(d=>d.medewerker_id));
+   update('team',shifts.error?'Bekijk bezetting':people.size+' medewerker(s) ingepland vandaag');
+  }catch(e){for(const key of ['uren','rooster','vrij','team'])update(key,'Open overzicht')}
+ }
  function refresh(){
   if(pending)return;
   const on=accessible();document.body.classList.toggle('riv-new-shell',on);sidebar.hidden=!on;home.hidden=!on;mobileToggle.hidden=!on;backdrop.hidden=!on;if(!on)support.hidden=true;
@@ -1436,15 +1488,47 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
   links.replaceChildren();
   const available=gebruikersRol==='medewerker'?employeeRoutes:routes.filter(x=>x[0]!=='bedrijf'||gebruikersRol==='beheerder');
   for(const [key,icon,label] of available){const b=document.createElement('button');b.type='button';b.dataset.route=key;b.innerHTML='<span class="riv-shell-icon" aria-hidden="true">'+icon+'</span><span>'+label+'</span>';b.onclick=()=>navigate(key);links.append(b)}
-  home.replaceChildren();const intro=document.createElement('div');intro.className='riv-shell-intro';intro.innerHTML='<h2>Eerstvolgende dienst:</h2><p class="riv-next-shift" role="status">Je volgende dienst laden…</p>';home.append(intro);void loadNextShift(intro);
-  const heading=document.createElement('h2');heading.className='riv-shell-heading';heading.textContent='Waar wil je naartoe?';home.append(heading);
-  const grid=document.createElement('div');grid.className='riv-shell-grid';for(const [key,icon,label,subtitle] of available.slice(1)){const b=document.createElement('button');b.type='button';b.className='riv-shell-tile';b.innerHTML='<span class="riv-shell-tileicon" aria-hidden="true">'+icon+'</span><strong>'+label+'</strong><small>'+subtitle+'</small>';b.onclick=()=>navigate(key);grid.append(b)}home.append(grid);
+  home.replaceChildren();const intro=document.createElement('div');intro.className='riv-shell-intro';
+  if(gebruikersRol==='medewerker'){
+   intro.innerHTML='<h2>Mijn volgende dienst</h2><p class="riv-next-shift" role="status">Je volgende dienst laden…</p>';
+   void loadNextShift(intro);
+  }else{
+   const title=document.createElement('h2');title.textContent=gebruikersRol==='beheerder'?'Beheerder — overzicht':'Planner — vandaag';
+   const detail=document.createElement('p');detail.className='riv-manager-location';detail.textContent='Actieve locatie: '+(locaties.find(l=>String(l.id)===String(huidigeLocatie))?.naam||'Kies een locatie');
+   intro.append(title,detail);
+  }
+  home.append(intro);
+  const heading=document.createElement('h2');heading.className='riv-shell-heading';heading.textContent=gebruikersRol==='medewerker'?'Snel naar': 'Wat vraagt vandaag aandacht?';home.append(heading);
+  const grid=document.createElement('div');grid.className='riv-shell-grid';
+  const priority=gebruikersRol==='medewerker'?
+   [['rooster','▦','Mijn rooster','Bekijk je gepubliceerde diensten'],['uren','◷','Mijn uren','Registreren en status bekijken'],['besch','✓','Beschikbaarheid','Automatisch opslaan'],['vrij','♡','Verlof','Aanvragen en volgen']]:
+   [['uren','◷','Uren beoordelen','Controleer ingediende uren'],['rooster','▦','Rooster publiceren','Bekijk concepten en bezetting'],['hr','♡','Verlof en afwezigheid','Behandel openstaande aanvragen'],['team','♙','Team vandaag','Bekijk ingeplande medewerkers']];
+  for(const [key,icon,label,subtitle] of priority){const b=document.createElement('button');b.type='button';b.className='riv-shell-tile riv-action-tile';
+   const ico=document.createElement('span');ico.className='riv-shell-tileicon';ico.setAttribute('aria-hidden','true');ico.textContent=icon;
+   const name=document.createElement('strong');name.textContent=label;
+   const caption=document.createElement('small');caption.textContent=subtitle;
+   const count=document.createElement('span');count.className='riv-action-count';count.dataset.actionCount=key;count.textContent='Gegevens laden…';
+   b.append(ico,name,caption,count);b.onclick=()=>navigate(key==='team'?'medewerkers':key);grid.append(b)}home.append(grid);
+  if(gebruikersRol==='medewerker'){
+   const extra=document.createElement('p');extra.className='subtiel riv-home-tip';extra.textContent='Berichten, profiel en support vind je in het menu.';home.append(extra)
+  }else{
+   const more=document.createElement('div');more.className='riv-home-shortcuts';const t=document.createElement('strong');t.textContent='Overige onderdelen';more.append(t);
+   for(const [key,,label] of available.filter(x=>!['home','rooster','uren','hr','medewerkers'].includes(x[0]))){const btn=document.createElement('button');btn.type='button';btn.className='secundair klein';btn.textContent=label;btn.onclick=()=>navigate(key);more.append(btn)}home.append(more)
+  }
+  void loadActionCounters(grid);
   const notice=document.createElement('div');notice.className='riv-shell-notice';notice.innerHTML='<h3>Wat vraagt aandacht?</h3><p id="rivShellNoticeText"></p>';notice.querySelector('p').textContent=gebruikersRol==='medewerker'?'Bekijk je komende dienst, berichten en verlofaanvragen via de tegels hierboven.':'Open het rooster, HR of Mijn uren om de actuele meldingen en aanvragen te bekijken.';home.append(notice);
   navigate('home');
  }
  // Auth kan door eerdere modules async worden bijgewerkt; observer kijkt alleen naar zichtbaarheid.
  const obs=new MutationObserver(()=>{if(!pending){pending=true;queueMicrotask(()=>{pending=false;refresh()})}});
  obs.observe(dashboard,{attributes:true,attributeFilter:['hidden']});
+ function refreshLocationHome(){if(gebruikersRol==='medewerker'||!accessible())return;
+  const title=home.querySelector('.riv-manager-location');
+  if(title)title.textContent='Actieve locatie: '+(locaties.find(l=>String(l.id)===String(huidigeLocatie))?.naam||'Kies een locatie');
+  const grid=home.querySelector('.riv-shell-grid');if(grid)void loadActionCounters(grid)
+ }
+ document.getElementById('locatieKeuze').addEventListener('change',()=>setTimeout(refreshLocationHome,0));
+ window.addEventListener('rivame:locatie',refreshLocationHome);
  document.getElementById('logout').addEventListener('click',()=>{sidebar.hidden=true;home.hidden=true;document.body.classList.remove('riv-new-shell','riv-shell-at-home')});
  setTimeout(refresh,0);
 })();
@@ -1668,7 +1752,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 @media(max-width:560px){.riv-alpha17-shifts{padding:15px!important}.riv-hours-stats{gap:6px}.riv-hours-stat{padding:10px 8px}.riv-hours-stat span{font-size:.69rem}.riv-hours-row{padding:13px!important;gap:8px!important}.riv-hours-badge{font-size:.69rem;padding:7px 8px;max-width:49%}}
 </style>
 <script>
-/* Rivame 4.0-alpha.20 — published roster shifts in Mijn uren.
+/* Rivame 4.0-alpha.23 — published roster shifts in Mijn uren.
    Complements existing (legacy) clock registrations without changing them. */
 (()=>{
   const panel=document.getElementById('rivameClockPanel');
@@ -2338,6 +2422,77 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
    setTimeout(()=>pane.scrollIntoView({block:'start',behavior:'instant'}),0);
   }
  };
+})();
+</script>
+<style>
+/* alpha.21: expliciete locatiekeuze voor beheerder */
+.riv-locatie-gate[hidden],.riv-locatie-switch[hidden]{display:none!important}
+.riv-locatie-gate{position:fixed;inset:0;z-index:10000;background:#0e2c37e8;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.riv-locatie-dialog{width:min(760px,100%);max-height:92dvh;overflow:auto;background:#fff;border-radius:22px;box-shadow:0 24px 90px #071c2770;padding:clamp(22px,4vw,38px);color:#123543}
+.riv-locatie-dialog h2{font-size:clamp(23px,3vw,30px);margin:0 0 9px}.riv-locatie-dialog p{color:#48626b;margin:0 0 22px}
+.riv-locatie-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.riv-locatie-card{display:flex!important;flex-direction:column;align-items:flex-start;gap:10px;min-height:142px;padding:20px!important;border:2px solid #d7e5e8!important;border-radius:15px!important;background:#f7fbfa!important;color:#123543!important;text-align:left!important;white-space:normal!important;cursor:pointer}
+.riv-locatie-card:hover,.riv-locatie-card:focus-visible{border-color:#20b8a2!important;background:#e5f6f1!important;outline-offset:3px}
+.riv-locatie-card strong{font-size:21px}.riv-locatie-card small{font-size:13px;color:#536c74}
+.riv-locatie-gate-msg{min-height:1.3em;color:#b42318!important;margin:15px 0 0!important}
+.riv-locatie-switch{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding:10px 14px;background:#e6f3ef;border:1px solid #c4dfd7;border-radius:12px;color:#123543}
+.riv-locatie-switch button{margin-left:auto;background:#123543;color:#fff;padding:8px 12px;border-radius:8px}
+.riv-manager-location{font-size:17px!important;font-weight:600;color:#e1f8ec!important}
+.riv-action-tile{border:1px solid #d8e7e2!important;align-items:flex-start!important;text-align:left!important;transition:transform .15s ease,box-shadow .15s ease}
+.riv-action-tile:hover{transform:translateY(-2px);box-shadow:0 7px 20px #12354322}
+.riv-action-count{margin-top:auto;display:block;background:#e3f5ef;color:#125845;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:700;max-width:100%;overflow-wrap:anywhere}
+.riv-home-shortcuts{display:flex;align-items:center;flex-wrap:wrap;gap:9px;background:#fff;border:1px solid #e1e9e6;border-radius:12px;padding:14px}
+.riv-home-shortcuts strong{width:100%}.riv-home-shortcuts button{margin:0!important}
+.riv-home-tip{margin:0!important}
+@media(max-width:550px){.riv-locatie-cards{grid-template-columns:1fr}.riv-locatie-card{min-height:100px}}
+</style>
+<script>
+/* Alleen beheerders kiezen na inloggen expliciet een locatie. De bestaande
+   locatie-select en de bestaande server-side rechten blijven de bron van waarheid. */
+(()=>{
+ const login=document.getElementById('login');
+ const dashboard=document.getElementById('dashboard');
+ const planner=document.getElementById('planner');
+ const originalSelect=document.getElementById('locatieKeuze');
+ const gate=document.createElement('section');gate.className='riv-locatie-gate';gate.hidden=true;gate.setAttribute('aria-label','Locatie kiezen');
+ gate.innerHTML='<div class="riv-locatie-dialog" role="dialog" aria-modal="true" aria-labelledby="rivLocTitle"><h2 id="rivLocTitle">Voor welke locatie ga je werken?</h2><p>Kies eerst je locatie. Alle overzichten en roosters volgen vervolgens jouw keuze.</p><div class="riv-locatie-cards" id="rivLocCards"></div><p id="rivLocError" class="riv-locatie-gate-msg" role="status"></p></div>';
+ document.body.append(gate);
+ const switcher=document.createElement('div');switcher.className='riv-locatie-switch';switcher.hidden=true;
+ switcher.innerHTML='<span>📍 Actieve locatie: <strong id="rivLocCurrent">—</strong></span><button type="button" id="rivLocSwitch">Andere locatie kiezen</button>';
+ dashboard.after(switcher);
+ const cards=gate.querySelector('#rivLocCards'),error=gate.querySelector('#rivLocError'),current=switcher.querySelector('#rivLocCurrent');
+ let selected=false,busy=false,serial=0;
+ function isAdmin(){return login.hidden&& !dashboard.hidden&&gebruikersRol==='beheerder'}
+ function options(){return [...originalSelect.options].filter(o=>o.value&&o.textContent.trim())}
+ function close(){gate.hidden=true;switcher.hidden=!isAdmin();document.body.classList.remove('riv-location-choosing')}
+ function show(){if(!isAdmin())return;const available=options();cards.replaceChildren();error.textContent=available.length?'':'Er zijn geen locaties beschikbaar. Controleer de toegang bij je systeembeheerder.';
+  for(const o of available){const id=o.value;const name=o.textContent.trim();const button=document.createElement('button');button.type='button';button.className='riv-locatie-card';
+   const title=document.createElement('strong');title.textContent=name;const caption=document.createElement('small');caption.textContent='Open rooster, uren en medewerkers';button.append('📍',title,caption);
+   button.onclick=async()=>{if(busy)return;busy=true;error.textContent='Locatie '+name+' wordt geopend…';[...cards.querySelectorAll('button')].forEach(b=>b.disabled=true);
+    try{originalSelect.value=id;document.getElementById('locatieMelding').textContent='';
+     // Wacht op de bestaande locatie-handler, inclusief rooster- en beschikbaarheidsladen.
+     if(typeof originalSelect.onchange==='function')await originalSelect.onchange({target:originalSelect});
+     if(document.getElementById('locatieMelding').textContent.trim())throw Error(document.getElementById('locatieMelding').textContent.trim());
+     if(originalSelect.value!==id)throw Error('Locatie kon niet worden geselecteerd.');
+     selected=true;current.textContent=name;close();window.dispatchEvent(new Event('rivame:locatie'));
+    }catch(e){error.textContent=e.message||'Locatie kiezen mislukt.'}finally{busy=false;[...cards.querySelectorAll('button')].forEach(b=>b.disabled=false)}};
+   cards.append(button)}
+  gate.hidden=false;switcher.hidden=true;document.body.classList.add('riv-location-choosing');
+  cards.querySelector('button')?.focus();
+ }
+ switcher.querySelector('#rivLocSwitch').onclick=show;
+ async function sync(){const stamp=++serial;
+  if(login.hidden===false||dashboard.hidden||gebruikersRol!=='beheerder'){
+   selected=false;gate.hidden=true;switcher.hidden=true;return;
+  }
+  if(selected){current.textContent=originalSelect.selectedOptions[0]?.textContent||current.textContent;switcher.hidden=false;return}
+  if(!options().length){await new Promise(resolve=>setTimeout(resolve,200));if(stamp!==serial)return}
+  if(!selected)show();
+ }
+ const obs=new MutationObserver(()=>{void sync()});obs.observe(dashboard,{attributes:true,attributeFilter:['hidden']});
+ db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){selected=false;gate.hidden=true;switcher.hidden=true;serial++}});
+ originalSelect.addEventListener('change',()=>{if(selected)current.textContent=originalSelect.selectedOptions[0]?.textContent||'—'});
+ setTimeout(()=>void sync(),100);
 })();
 </script>
 </body>
