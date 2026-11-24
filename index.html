@@ -151,7 +151,7 @@ body h1{color:#123543}button:not(.secundair):not(.gevaar){background:#123543;col
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const RIVAME_VERSION = '4.0-alpha.34';
+const RIVAME_VERSION = '4.0-alpha.35';
 document.getElementById('rivameVersion').textContent='Versie '+RIVAME_VERSION;
 const SUPABASE_URL = 'https://tvghmaltprpseimlzcbi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_M3FAfJg4lb4D6wVvVsrL-g_iAxB80nI';
@@ -1351,7 +1351,7 @@ body.riv-new-shell{background:#f3f7f4;color:#18392e}
  ];
  const topicsHost=support.querySelector('#rivSupportTopics');const search=support.querySelector('#rivSupportSearch');function drawTopics(){topicsHost.replaceChildren();const q=search.value.trim().toLocaleLowerCase('nl-NL');const planning=['planner','beheerder'].includes(gebruikersRol);for(const [name,body] of topics.filter(x=>(x[2]==='iedereen'||planning)&&(x[0]+' '+x[1]).toLocaleLowerCase('nl-NL').includes(q))){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=name;const p=document.createElement('p');p.textContent=body;d.append(s,p);topicsHost.append(d)}if(!topicsHost.children.length)topicsHost.textContent='Geen hulptekst gevonden.'}search.oninput=drawTopics;drawTopics();
  const sidebar=document.createElement('aside');sidebar.className='riv-shell-sidebar';sidebar.hidden=true;sidebar.setAttribute('aria-label','Hoofdnavigatie');
- sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.34</div>';
+ sidebar.innerHTML='<div class="riv-shell-brand"><svg viewBox="0 0 72 72" width="43" height="43" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><span>rivame<small>ALLES WERKT SAMEN</small></span></div><nav class="riv-shell-links" aria-label="Rivame navigatie"></nav><div class="riv-shell-foot">Rivame Personeel · 4.0-alpha.35</div>';
  document.body.append(sidebar);
  const mobileToggle=document.createElement('button');mobileToggle.type='button';mobileToggle.className='riv-mobile-toggle';mobileToggle.hidden=true;mobileToggle.innerHTML='<div class="riv-mobile-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-hidden="true"><rect width="72" height="72" rx="16" fill="#123543"/><path d="M17 53V16H34Q55 16 53 29Q52 39 34 39H18" fill="none" stroke="#fff" stroke-width="8"/><path d="M31 37L53 54" fill="none" stroke="#20B8A2" stroke-width="9"/></svg><strong>rivame</strong></div><span aria-hidden="true">☰</span>';mobileToggle.setAttribute('aria-label','Menu openen');mobileToggle.setAttribute('aria-expanded','false');document.body.append(mobileToggle);
  const backdrop=document.createElement('button');backdrop.type='button';backdrop.className='riv-mobile-backdrop';backdrop.hidden=true;backdrop.setAttribute('aria-label','Menu sluiten');document.body.append(backdrop);
@@ -1770,7 +1770,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 @media(max-width:560px){.riv-alpha17-shifts{padding:15px!important}.riv-hours-stats{gap:6px}.riv-hours-stat{padding:10px 8px}.riv-hours-stat span{font-size:.69rem}.riv-hours-row{padding:13px!important;gap:8px!important}.riv-hours-badge{font-size:.69rem;padding:7px 8px;max-width:49%}}
 </style>
 <script>
-/* Rivame 4.0-alpha.34 — published roster shifts in Mijn uren.
+/* Rivame 4.0-alpha.35 — published roster shifts in Mijn uren.
    Complements existing (legacy) clock registrations without changing them. */
 (()=>{
   const panel=document.getElementById('rivameClockPanel');
@@ -2529,7 +2529,7 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
 })();
 </script>
 <style>
-/* Rivame 4.0-alpha.34: HR werkvoorraad boven bestaande HR-onderdelen */
+/* Rivame 4.0-alpha.35: HR werkvoorraad boven bestaande HR-onderdelen */
 .riv-hr24{margin:15px 0 23px;padding:18px;border:1px solid #d6e6e2;border-radius:16px;background:#f7fbfa;color:#123543}
 .riv-hr24[hidden]{display:none!important}
 .riv-hr24-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:15px}
@@ -2901,6 +2901,83 @@ dialog.riv-hours-dialog::backdrop{background:rgba(10,35,48,.57);backdrop-filter:
   }catch(e){if(id===companyId)message.textContent='Opslaan mislukt: '+(e.message||String(e))}
   finally{save.disabled=id!==companyId}
  };
+ tab.addEventListener('click',()=>void refresh());
+ window.addEventListener('rivame:locatie',()=>void refresh());
+})();
+</script>
+<style>
+.riv-sys35{border:1px solid #d1e4de;background:#f7fbfa;border-radius:17px;padding:20px;margin:16px 0;color:#123543}
+.riv-sys35 h3{margin:0 0 7px}.riv-sys35>p{color:#5a7078;font-size:13px;margin:7px 0 15px}
+.riv-sys35-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.riv-sys35-card{border:1px solid #dce8e5;background:#fff;border-radius:13px;padding:15px;min-width:0}
+.riv-sys35-card h4{margin:0 0 12px}.riv-sys35-row{border-top:1px solid #e5eeeb;padding:11px 0;display:grid;gap:7px}
+.riv-sys35-row:first-of-type{border-top:0}.riv-sys35-row strong{font-size:14px}.riv-sys35-row small{font-size:12px;color:#63777d}
+.riv-sys35-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.riv-sys35-actions select{max-width:210px;min-width:145px;margin:0}.riv-sys35-actions button{padding:8px 11px;min-height:37px}
+.riv-sys35-choice{display:inline-flex;gap:6px;align-items:center;font-size:13px;margin-right:12px}
+.riv-sys35-status{font-size:13px;color:#315c53;min-height:1.5em}
+@media(max-width:790px){.riv-sys35-grid{grid-template-columns:1fr}}
+</style>
+<script>
+/* alpha.35: server-gecontroleerde mutaties per bedrijf en audit-inzage.
+   Bedrijfsrollen zijn apart van de oude globale profielrol. */
+(()=>{
+ const pane=document.getElementById('beheerPane'),tab=document.getElementById('tabBeheer');if(!pane||!tab)return;
+ const host=document.createElement('section');host.className='riv-sys35';host.setAttribute('aria-label','Bedrijf en locaties beheren');
+ const title=document.createElement('h3');title.textContent='Beheer bedrijfsleden & locaties';
+ const intro=document.createElement('p');intro.textContent='Wijzigingen gelden voor dit bedrijf. De bestaande globale profielrol blijft apart totdat alle oude functies naar bedrijfsrollen zijn omgezet.';
+ const status=document.createElement('p');status.className='riv-sys35-status';status.setAttribute('role','status');
+ const grid=document.createElement('div');grid.className='riv-sys35-grid';
+ const cards=[],lists=[];for(const name of ['Locaties beheren','Bedrijfsleden en rollen','Medewerkers koppelen aan locaties','Laatste wijzigingen']){
+  const card=document.createElement('div');card.className='riv-sys35-card';const h=document.createElement('h4');h.textContent=name;
+  const list=document.createElement('div');card.append(h,list);grid.append(card);cards.push(card);lists.push(list)}
+ host.append(title,intro,status,grid);const last=pane.querySelector('.riv-sys34');if(last)last.after(host);else pane.append(host);
+ const make=(tag,value,cls)=>{const el=document.createElement(tag);if(value!==undefined)el.textContent=value;if(cls)el.className=cls;return el};
+ const action=(label,fn)=>{const b=make('button',label,'secundair klein');b.type='button';b.onclick=fn;return b};
+ let seq=0,company=null,changing=false;
+ async function call(name,args){const r=await db.rpc(name,args);if(r.error)throw r.error;return r.data}
+ async function mutate(label,rpc,args){if(changing||company===null)return;if(!confirm(label+'?'))return;
+  changing=true;status.textContent='Wijziging opslaan…';const id=company;
+  try{await call(rpc,args);if(id!==company)return;status.textContent='Wijziging opgeslagen in het bedrijfslogboek.';await refresh()}
+  catch(e){if(id===company)status.textContent='Wijziging mislukt: '+(e.message||String(e))}
+  finally{changing=false}
+ }
+ function render(info,details){const locations=info.locaties||[],members=info.leden||[],links=details.koppelingen||[],audit=details.audit||[];
+  lists.forEach(x=>x.replaceChildren());
+  for(const loc of locations){const row=make('div',undefined,'riv-sys35-row');row.append(make('strong',loc.naam),make('small',loc.actief?'Actief':'Inactief'));
+   const buttons=make('div',undefined,'riv-sys35-actions');buttons.append(action(loc.actief?'Locatie deactiveren':'Locatie activeren',()=>mutate(
+    (loc.actief?'Locatie '+loc.naam+' deactiveren':'Locatie '+loc.naam+' activeren'),
+    'rivame_sys_locatie_actief',{p_bedrijf_id:company,p_locatie_id:loc.id,p_actief:!loc.actief})));
+   row.append(buttons);lists[0].append(row)}
+  for(const person of members){const row=make('div',undefined,'riv-sys35-row');row.append(make('strong',person.naam||'Medewerker'),make('small',(person.actief?'Actief':'Inactief')+' · '+person.rol));
+   const controls=make('div',undefined,'riv-sys35-actions'),select=make('select');select.setAttribute('aria-label','Bedrijfsrol van '+person.naam);
+   for(const role of ['bedrijfsbeheerder','planner','leidinggevende','medewerker']){const option=make('option',role);option.value=role;select.append(option)}
+   select.value=['beheerder','eigenaar'].includes(person.rol)?'bedrijfsbeheerder':person.rol;
+   controls.append(select,action('Rol opslaan',()=>mutate('Bedrijfsrol van '+person.naam+' wijzigen naar '+select.value,
+    'rivame_sys_lid_rol',{p_bedrijf_id:company,p_profiel_id:person.profiel_id,p_rol:select.value})),
+    action(person.actief?'Deactiveren':'Activeren',()=>mutate('Bedrijfslid '+person.naam+' '+(person.actief?'deactiveren':'activeren'),
+     'rivame_sys_lid_actief',{p_bedrijf_id:company,p_profiel_id:person.profiel_id,p_actief:!person.actief})));
+   row.append(controls);lists[1].append(row)}
+  for(const person of members.filter(x=>x.actief)){
+   const row=make('div',undefined,'riv-sys35-row');row.append(make('strong',person.naam||'Medewerker'));
+   const choices=make('div');for(const loc of locations){const label=make('label',undefined,'riv-sys35-choice'),box=document.createElement('input');box.type='checkbox';
+    box.checked=links.some(l=>String(l.profiel_id)===String(person.profiel_id)&&Number(l.locatie_id)===Number(loc.id));
+    box.onchange=()=>{const selected=box.checked;box.checked=!selected;void mutate((selected?'Koppelen aan ':'Loskoppelen van ')+loc.naam+' voor '+person.naam,
+     'rivame_sys_locatie_koppelen',{p_bedrijf_id:company,p_profiel_id:person.profiel_id,p_locatie_id:loc.id,p_koppelen:selected})};
+    label.append(box,document.createTextNode(loc.naam));choices.append(label)}row.append(choices);lists[2].append(row)}
+  for(const a of audit){const row=make('div',undefined,'riv-sys35-row');row.append(make('strong',a.actie||'Wijziging'),
+   make('small',(a.actor||'Beheerder')+' · '+new Date(a.op).toLocaleString('nl-NL',{timeZone:'Europe/Amsterdam'})));lists[3].append(row)}
+  lists.forEach((l,i)=>{if(!l.children.length)l.append(make('p',i===3?'Nog geen gelogde wijzigingen.':'Geen gegevens beschikbaar.'))});
+ }
+ async function refresh(){if(pane.hidden||gebruikersRol!=='beheerder')return;
+  const token=++seq;company=null;status.textContent='Bedrijfsbeheer laden…';lists.forEach(x=>x.replaceChildren());
+  try{const loc=await db.from('locaties').select('bedrijf_id').eq('id',Number(huidigeLocatie)).maybeSingle();
+   if(loc.error)throw loc.error;if(!loc.data?.bedrijf_id)throw Error('Geen bedrijf gekoppeld aan deze locatie.');
+   const id=Number(loc.data.bedrijf_id);const [info,details]=await Promise.all([
+    call('rivame_sys_bedrijf_overzicht',{p_bedrijf_id:id}),call('rivame_sys_beheer_details',{p_bedrijf_id:id})]);
+   if(token!==seq)return;company=id;render(info,details);status.textContent='Beheer voor '+info.bedrijf_naam+' · '+(info.leden||[]).length+' bedrijfsleden.';
+  }catch(e){if(token===seq)status.textContent='Beheer niet beschikbaar: '+(e.message||String(e))}
+ }
  tab.addEventListener('click',()=>void refresh());
  window.addEventListener('rivame:locatie',()=>void refresh());
 })();
